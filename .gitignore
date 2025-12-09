@@ -1,0 +1,30 @@
+.claude/
+.windsurf/
+openspec/
+.spec-workflow/
+
+# Node / package managers
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+build/
+dist/
+addon/
+coverage/
+*.xpi
+*.zip
+
+# Environment & local configs
+.env
+.env.*
+.DS_Store
+
+# Editor artifacts
+.vscode/
+*.swp
+*.swo
+*.log
