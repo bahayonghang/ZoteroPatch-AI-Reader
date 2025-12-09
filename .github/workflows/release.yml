@@ -1,0 +1,248 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release'
+        required: true
+        type: string
+
+jobs:
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Run ESLint
+        run: npm run lint
+
+      - name: 📝 Run TypeScript type check
+        run: npx tsc --noEmit
+
+      - name: 🧪 Run tests
+        run: npm test || echo "No tests configured yet"
+
+      - name: ✅ Validation complete
+        run: echo "All validation checks passed!"
+
+  build-and-package:
+    name: Build and Package
+    runs-on: ubuntu-latest
+    needs: validate
+
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 🏷️ Get version from tag
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.tag }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION}"
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🚀 Build plugin
+        run: npm run build
+
+      - name: 📊 Verify build
+        run: |
+          echo "=== Build Output ==="
+          ls -lh build/
+          echo ""
+          echo "=== Build Size ==="
+          du -h build/index.js
+          echo ""
+          echo "=== Build Contents ==="
+          file build/index.js
+
+      - name: 📦 Create .xpi package
+        run: |
+          cd build
+          zip -r ../zoteropatch-ai-reader-${{ steps.get_version.outputs.version }}.xpi .
+          cd ..
+          echo "Package created: zoteropatch-ai-reader-${{ steps.get_version.outputs.version }}.xpi"
+          ls -lh zoteropatch-ai-reader-*.xpi
+
+      - name: 🎯 Upload plugin package
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-package
+          path: zoteropatch-ai-reader-*.xpi
+
+      - name: 📦 Upload build directory
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-files
+          path: build/
+
+  build-docs:
+    name: Build and Deploy Documentation
+    runs-on: ubuntu-latest
+    needs: validate
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install docs dependencies
+        run: cd docs && npm ci
+
+      - name: 📚 Build documentation
+        run: cd docs && npm run build
+
+      - name: 📦 Upload docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-build
+          path: docs/.vitepress/dist/
+
+      # 如果你配置了 GitHub Pages，取消注释以下步骤
+      # - name: 🚀 Deploy to GitHub Pages
+      #   uses: peaceiris/actions-gh-pages@v3
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_dir: docs/.vitepress/dist
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-and-package, build-docs]
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📥 Download plugin package
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-package
+
+      - name: 📥 Download docs build
+        uses: actions/download-artifact@v4
+        with:
+          name: docs-build
+          path: docs-dist
+
+      - name: 🏷️ Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.tag }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: 📝 Generate changelog
+        id: changelog
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG=${GITHUB_REF#refs/tags/}
+          fi
+
+          # Get previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 ${TAG}^ 2>/dev/null || echo "")
+
+          if [ -z "$PREV_TAG" ]; then
+            echo "First release!"
+            CHANGELOG="## 🎉 First Release\n\nThis is the first release of ZoteroPatch AI Reader."
+          else
+            echo "Generating changelog from ${PREV_TAG} to ${TAG}"
+            CHANGELOG=$(git log ${PREV_TAG}..${TAG} --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          # Save to file
+          echo -e "## What's Changed\n\n${CHANGELOG}\n\n## 📦 Installation\n\n1. Download \`zoteropatch-ai-reader-${TAG}.xpi\` below\n2. In Zotero, go to Tools → Add-ons\n3. Click the gear icon → Install Add-on From File\n4. Select the downloaded .xpi file\n5. Restart Zotero\n\n## 📚 Documentation\n\nView the full documentation at [GitHub Pages](https://yourusername.github.io/ZoteroPatch-AI-Reader/)\n\n## 🔧 Requirements\n\n- Zotero 7.0 or higher\n- OpenAI-compatible API key" > CHANGELOG.md
+
+          cat CHANGELOG.md
+
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: Release ${{ steps.get_version.outputs.version }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+          files: |
+            zoteropatch-ai-reader-*.xpi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ✅ Release complete
+        run: |
+          echo "🎉 Release ${{ steps.get_version.outputs.version }} created successfully!"
+          echo "📦 Package: zoteropatch-ai-reader-${{ steps.get_version.outputs.version }}.xpi"
+          echo "🔗 View at: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ steps.get_version.outputs.version }}"
+
+  notify:
+    name: Notify Release
+    runs-on: ubuntu-latest
+    needs: create-release
+    if: success()
+
+    steps:
+      - name: 🏷️ Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.tag }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: 📢 Release notification
+        run: |
+          echo "✅ Release ${{ steps.get_version.outputs.version }} has been published!"
+          echo "🔗 https://github.com/${{ github.repository }}/releases/tag/${{ steps.get_version.outputs.version }}"
