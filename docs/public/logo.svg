@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="45" fill="#4f46e5" opacity="0.1"/>
+
+  <!-- Book/PDF icon -->
+  <path d="M30 25 L70 25 L70 75 L30 75 Z" fill="#4f46e5" opacity="0.3"/>
+  <path d="M32 25 L68 25 L68 73 L32 73 Z" fill="none" stroke="#4f46e5" stroke-width="2"/>
+
+  <!-- Page lines -->
+  <line x1="38" y1="35" x2="62" y2="35" stroke="#4f46e5" stroke-width="1.5"/>
+  <line x1="38" y1="42" x2="62" y2="42" stroke="#4f46e5" stroke-width="1.5"/>
+  <line x1="38" y1="49" x2="56" y2="49" stroke="#4f46e5" stroke-width="1.5"/>
+
+  <!-- AI sparkle/star -->
+  <g transform="translate(58, 58)">
+    <!-- Central star -->
+    <circle cx="0" cy="0" r="3" fill="#f59e0b"/>
+    <!-- Rays -->
+    <path d="M0,-8 L0,-5 M0,5 L0,8 M-8,0 L-5,0 M5,0 L8,0
+             M-6,-6 L-4,-4 M4,4 L6,6 M6,-6 L4,-4 M-4,4 L-6,6"
+          stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>

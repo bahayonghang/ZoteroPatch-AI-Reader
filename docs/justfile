@@ -1,0 +1,115 @@
+# ZoteroPatch AI Reader - Docs Justfile
+# 文档相关的任务管理
+
+# 默认任务：启动开发服务器
+default: dev
+
+# Show detailed help information
+help:
+    @echo "╔══════════════════════════════════════════════════════════════════╗"
+    @echo "║         ZoteroPatch AI Reader - Docs Command Reference          ║"
+    @echo "╚══════════════════════════════════════════════════════════════════╝"
+    @echo ""
+    @echo "📚 DOCUMENTATION DEVELOPMENT"
+    @echo "  just dev              - Start docs dev server (default)"
+    @echo "  just build            - Build documentation"
+    @echo "  just preview          - Preview built documentation"
+    @echo ""
+    @echo "📦 SETUP"
+    @echo "  just install          - Install docs dependencies"
+    @echo "  just setup            - Complete docs setup"
+    @echo ""
+    @echo "🧹 MAINTENANCE"
+    @echo "  just clean            - Clean build artifacts"
+    @echo "  just clean-all        - Clean all (including node_modules)"
+    @echo "  just format           - Format documentation files"
+    @echo ""
+    @echo "🔍 UTILITIES"
+    @echo "  just check-links      - Check documentation links"
+    @echo "  just spell-check      - Run spell checker"
+    @echo "  just stats            - Show documentation statistics"
+    @echo "  just search <term>    - Search documentation content"
+    @echo ""
+    @echo "💡 TIPS:"
+    @echo "  • Run 'just' to start dev server immediately"
+    @echo "  • Dev server runs at http://localhost:5173"
+    @echo "  • Changes auto-reload in dev mode"
+    @echo ""
+
+# 安装文档依赖
+install:
+    @echo "📦 Installing docs dependencies..."
+    npm install
+
+# 启动开发服务器
+dev:
+    @echo "📚 Starting docs development server..."
+    @echo "💡 Access at http://localhost:5173"
+    npm run dev
+
+# 构建文档
+build:
+    @echo "📚 Building docs..."
+    npm run build
+
+# 预览构建结果
+preview:
+    @echo "👀 Previewing docs build..."
+    npm run preview
+
+# 清理构建产物
+clean:
+    @echo "🧹 Cleaning docs build artifacts..."
+    rm -rf .vitepress/dist .vitepress/cache
+
+# 清理所有（包括 node_modules）
+clean-all: clean
+    @echo "🧹 Cleaning all..."
+    rm -rf node_modules
+
+# 检查文档链接
+check-links:
+    @echo "🔍 Checking documentation links..."
+    @find . -name "*.md" -type f -not -path "./node_modules/*" -not -path "./.vitepress/*" | \
+        xargs grep -h "\[.*\](" | \
+        grep -v "^#" | \
+        wc -l | \
+        xargs -I {} echo "Found {} markdown links"
+
+# 格式化文档
+format:
+    @echo "✨ Formatting documentation..."
+    npx prettier --write "**/*.{md,ts,json}"
+
+# 拼写检查（需要安装 cspell）
+spell-check:
+    @echo "📝 Running spell check..."
+    @if command -v cspell > /dev/null; then \
+        npx cspell "**/*.md"; \
+    else \
+        echo "⚠️  cspell not installed, skipping..."; \
+    fi
+
+# 查看文档统计
+stats:
+    @echo "📊 Documentation Statistics"
+    @echo "=========================="
+    @echo "Total .md files: $(find . -name "*.md" -type f -not -path "./node_modules/*" -not -path "./.vitepress/*" | wc -l)"
+    @echo "Total lines: $(find . -name "*.md" -type f -not -path "./node_modules/*" -not -path "./.vitepress/*" -exec cat {} \; | wc -l)"
+    @echo "Guide pages: $(find ./guide -name "*.md" -type f 2>/dev/null | wc -l)"
+    @echo "Development pages: $(find ./development -name "*.md" -type f 2>/dev/null | wc -l)"
+    @echo "API pages: $(find ./api -name "*.md" -type f 2>/dev/null | wc -l)"
+
+# 搜索文档内容
+search term:
+    @echo "🔍 Searching for '{{term}}'..."
+    @grep -r "{{term}}" . --include="*.md" --exclude-dir=node_modules --exclude-dir=.vitepress -n
+
+# 开发前的准备工作
+setup: install
+    @echo "✅ Documentation setup complete!"
+    @echo "💡 Run 'just dev' to start the development server"
+
+# 完整的构建和预览流程
+preview-build: build preview
+    @echo "✅ Build preview ready!"
