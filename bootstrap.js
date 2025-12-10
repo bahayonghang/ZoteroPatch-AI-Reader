@@ -3,14 +3,22 @@
  * This file handles plugin lifecycle: install, startup, shutdown, uninstall
  */
 
+// eslint-disable-next-line no-unused-vars
+var chromeHandle;
+
 // Global plugin instance reference
-let pluginInstance = null;
+var pluginInstance = null;
+
+// Store rootURI for use in other functions
+var rootURI;
 
 /**
  * Called when the plugin is installed
  */
-function install() {
-  console.log('[AI Reader] Plugin installed');
+// eslint-disable-next-line no-unused-vars
+function install(data, reason) {
+  // eslint-disable-next-line no-undef
+  Zotero.debug('[AI Reader] Plugin installed');
 }
 
 /**
@@ -18,20 +26,51 @@ function install() {
  * @param {Object} data - Plugin startup data
  * @param {number} reason - Reason code for startup
  */
-async function startup({ id, version, rootURI }, reason) {
-  console.log(`[AI Reader] Starting up v${version}`);
+// eslint-disable-next-line no-unused-vars
+async function startup({ id, version, resourceURI, rootURI: _rootURI }, reason) {
+  rootURI = _rootURI;
 
-  // Load compiled plugin code
+  // eslint-disable-next-line no-undef
+  Zotero.debug(`[AI Reader] Starting up v${version}, rootURI: ${rootURI}`);
+
+  // Wait for Zotero to be ready
+  // eslint-disable-next-line no-undef
+  await Zotero.initializationPromise;
+
+  // Register chrome resources
+  // eslint-disable-next-line no-undef
+  const aomStartup = Components.classes[
+    '@mozilla.org/addons/addon-manager-startup;1'
+  ].getService(Components.interfaces.amIAddonManagerStartup);
+
+  const manifestURI = Services.io.newURI(rootURI + 'manifest.json');
+  chromeHandle = aomStartup.registerChrome(manifestURI, [
+    ['content', 'aireader', rootURI + 'chrome/content/'],
+    ['skin', 'aireader', 'classic/1.0', rootURI + 'skin/'],
+  ]);
+
+  // Load compiled plugin code - index.js is in the root of the XPI
   try {
-    Services.scriptloader.loadSubScript(rootURI + 'build/index.js');
+    // eslint-disable-next-line no-undef
+    Services.scriptloader.loadSubScript(rootURI + 'index.js');
 
     // Initialize plugin instance if exported from index.ts
+    // eslint-disable-next-line no-undef
     if (typeof Zotero !== 'undefined' && Zotero.AIReader) {
+      // eslint-disable-next-line no-undef
       pluginInstance = Zotero.AIReader;
       await pluginInstance.startup();
+      // eslint-disable-next-line no-undef
+      Zotero.debug('[AI Reader] Plugin startup complete');
+    } else {
+      // eslint-disable-next-line no-undef
+      Zotero.debug('[AI Reader] Warning: Zotero.AIReader not found after loading index.js');
     }
   } catch (error) {
-    console.error('[AI Reader] Failed to load plugin:', error);
+    // eslint-disable-next-line no-undef
+    Zotero.debug('[AI Reader] Failed to load plugin: ' + error);
+    // eslint-disable-next-line no-undef
+    Zotero.logError(error);
   }
 }
 
@@ -40,8 +79,10 @@ async function startup({ id, version, rootURI }, reason) {
  * @param {Object} data - Plugin data
  * @param {number} reason - Reason code for shutdown
  */
-async function shutdown({ id, version, rootURI }, reason) {
-  console.log(`[AI Reader] Shutting down v${version}`);
+// eslint-disable-next-line no-unused-vars
+async function shutdown({ id, version, rootURI: _rootURI }, reason) {
+  // eslint-disable-next-line no-undef
+  Zotero.debug(`[AI Reader] Shutting down v${version}`);
 
   if (pluginInstance) {
     await pluginInstance.shutdown();
@@ -49,14 +90,24 @@ async function shutdown({ id, version, rootURI }, reason) {
   }
 
   // Clean up any global references
+  // eslint-disable-next-line no-undef
   if (typeof Zotero !== 'undefined' && Zotero.AIReader) {
+    // eslint-disable-next-line no-undef
     delete Zotero.AIReader;
+  }
+
+  // Unregister chrome
+  if (chromeHandle) {
+    chromeHandle.destruct();
+    chromeHandle = null;
   }
 }
 
 /**
  * Called when the plugin is uninstalled
  */
-function uninstall() {
-  console.log('[AI Reader] Plugin uninstalled');
+// eslint-disable-next-line no-unused-vars
+function uninstall(data, reason) {
+  // eslint-disable-next-line no-undef
+  Zotero.debug('[AI Reader] Plugin uninstalled');
 }
