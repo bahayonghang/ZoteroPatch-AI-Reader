@@ -38,6 +38,25 @@ const buildOptions = {
   logLevel: 'info',
 };
 
+/**
+ * Copy directory recursively
+ */
+function copyDirSync(src, dest) {
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    if (entry.isDirectory()) {
+      copyDirSync(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
 async function build() {
   try {
     if (isWatch) {
@@ -61,6 +80,15 @@ async function build() {
         );
       }
 
+      // Copy chrome.manifest
+      if (fs.existsSync(path.join(__dirname, '..', 'chrome.manifest'))) {
+        fs.copyFileSync(
+          path.join(__dirname, '..', 'chrome.manifest'),
+          path.join(buildDir, 'chrome.manifest')
+        );
+        console.log('📋 chrome.manifest copied');
+      }
+
       // Copy skin directory (icons) to build directory
       const skinDir = path.join(__dirname, '..', 'skin');
       const buildSkinDir = path.join(buildDir, 'skin');
@@ -78,6 +106,14 @@ async function build() {
           }
         });
         console.log('🎨 Icon files copied to build directory');
+      }
+
+      // Copy chrome directory (preferences, content)
+      const chromeDir = path.join(__dirname, '..', 'chrome');
+      const buildChromeDir = path.join(buildDir, 'chrome');
+      if (fs.existsSync(chromeDir)) {
+        copyDirSync(chromeDir, buildChromeDir);
+        console.log('📁 Chrome directory copied');
       }
 
       console.log('📦 Manifest and bootstrap copied to build directory');
