@@ -1,6 +1,6 @@
 /**
  * Main entry point for Zotero AI Reader Assistant
- * Implements the plugin lifecycle and window management
+ * Implements the plugin lifecycle using Zotero 7 APIs
  */
 
 import { ReaderPanelManager } from './panel/ReaderPanelManager';
@@ -9,8 +9,13 @@ import { SessionManager } from './services/SessionManager';
 import { ConfigManager } from './services/ConfigManager';
 import { LLMClient } from './services/LLMClient';
 import { NotesSyncService } from './services/NotesSyncService';
-import { PreferencesPanel } from './prefs/PreferencesPanel';
-import type { ZoteroReader, WindowListener } from './types';
+import type { ZoteroReader } from './types';
+
+// Declare global Zotero types
+declare const Zotero: any;
+declare const Services: any;
+declare const Components: any;
+declare const ChromeUtils: any;
 
 class AIReaderPlugin {
   private readerPanelManager: ReaderPanelManager;
@@ -19,9 +24,10 @@ class AIReaderPlugin {
   private configManager: ConfigManager;
   private llmClient: LLMClient | null;
   private notesSyncService: NotesSyncService;
-  private preferencesPanel: PreferencesPanel;
-  private windowListeners: Map<Window, EventListener>;
-  private serviceWindowListener: WindowListener | null;
+  private notifierID: string | null = null;
+  private prefsPaneID: string | null = null;
+  private readerTabID: string | null = null;
+  private unregisterReaderSection: (() => void) | null = null;
 
   constructor() {
     this.readerPanelManager = new ReaderPanelManager();
@@ -30,18 +36,20 @@ class AIReaderPlugin {
     this.configManager = new ConfigManager();
     this.llmClient = null;
     this.notesSyncService = new NotesSyncService();
-    this.preferencesPanel = new PreferencesPanel();
-    this.windowListeners = new Map();
-    this.serviceWindowListener = null;
 
-    console.log('[AI Reader] Plugin instance created');
+    Zotero.debug('[AI Reader] Plugin instance created');
   }
 
   /**
    * Startup - called by bootstrap.js
    */
   async startup(): Promise<void> {
-    console.log('[AI Reader] Starting up plugin...');
+    Zotero.debug('[AI Reader] Starting up plugin...');
+
+    // Wait for Zotero to be ready
+    if (Zotero.uiReadyPromise) {
+      await Zotero.uiReadyPromise;
+    }
 
     // Initialize configuration
     await this.configManager.load();
@@ -57,26 +65,243 @@ class AIReaderPlugin {
       });
     }
 
-    // Register preferences panel
-    this.preferencesPanel.register();
+    // Register preferences pane using Zotero 7 API
+    this.registerPreferencesPane();
 
-    // Register window listeners for Reader windows
-    this.registerWindowListeners();
+    // Register Reader sidebar section
+    this.registerReaderSidebarSection();
 
-    // Register to existing Reader windows (if any)
-    await this.registerExistingReaders();
+    // Register notifier to track Reader tab open/close
+    this.registerNotifier();
 
-    console.log('[AI Reader] Plugin startup complete');
+    Zotero.debug('[AI Reader] Plugin startup complete');
+  }
+
+  /**
+   * Register preferences pane in Zotero settings
+   */
+  private registerPreferencesPane(): void {
+    try {
+      // Zotero 7 uses Zotero.PreferencePanes.register
+      if (Zotero.PreferencePanes && typeof Zotero.PreferencePanes.register === 'function') {
+        this.prefsPaneID = Zotero.PreferencePanes.register({
+          pluginID: 'ai-reader@zoteropatch.com',
+          src: 'chrome://aireader/content/preferences.xhtml',
+          label: 'AI Reader',
+          image: 'chrome://aireader/skin/icon-32.svg',
+        });
+        Zotero.debug('[AI Reader] Preferences pane registered with ID: ' + this.prefsPaneID);
+      } else {
+        Zotero.debug('[AI Reader] Zotero.PreferencePanes.register not available');
+      }
+    } catch (error) {
+      Zotero.debug('[AI Reader] Failed to register preferences pane: ' + error);
+      Zotero.logError(error);
+    }
+  }
+
+  /**
+   * Register Reader sidebar section using Zotero 7 Reader API
+   */
+  private registerReaderSidebarSection(): void {
+    try {
+      const readerAPI = Zotero.Reader;
+      
+      if (!readerAPI) {
+        Zotero.debug('[AI Reader] Zotero.Reader not available');
+        return;
+      }
+
+      Zotero.debug('[AI Reader] Zotero.Reader available, checking for sidebar API...');
+      Zotero.debug('[AI Reader] Available Reader methods: ' + Object.keys(readerAPI).join(', '));
+
+      // Zotero 7.0+ uses Zotero.Reader.registerSidebarSection
+      if (typeof readerAPI.registerSidebarSection === 'function') {
+        Zotero.debug('[AI Reader] Using registerSidebarSection API');
+        
+        const sectionConfig = {
+          paneID: 'ai-reader-pane',
+          id: 'ai-reader-section', 
+          title: 'AI 助手',
+          index: 3,
+          icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3l2 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+          init: this.handleSidebarInit.bind(this),
+          destroy: this.handleSidebarDestroy.bind(this),
+        };
+
+        this.unregisterReaderSection = readerAPI.registerSidebarSection(sectionConfig);
+        Zotero.debug('[AI Reader] Reader sidebar section registered successfully');
+        return;
+      }
+
+      // Fallback for older API
+      if (typeof readerAPI._registerSidebarSection === 'function') {
+        Zotero.debug('[AI Reader] Using _registerSidebarSection API (internal)');
+        
+        this.unregisterReaderSection = readerAPI._registerSidebarSection({
+          paneID: 'ai-reader-pane',
+          id: 'ai-reader-section',
+          title: 'AI 助手',
+          init: this.handleSidebarInit.bind(this),
+          destroy: this.handleSidebarDestroy.bind(this),
+        });
+        Zotero.debug('[AI Reader] Reader sidebar section registered via internal API');
+        return;
+      }
+
+      Zotero.debug('[AI Reader] No sidebar registration API found');
+    } catch (error) {
+      Zotero.debug('[AI Reader] Failed to register sidebar section: ' + error);
+      Zotero.logError(error);
+    }
+  }
+
+  /**
+   * Handle sidebar init callback
+   */
+  private handleSidebarInit(props: { body: HTMLElement; item: any; tabID: string; reader?: ZoteroReader }): void {
+    try {
+      Zotero.debug('[AI Reader] Sidebar init called with props: ' + JSON.stringify({
+        hasBody: !!props.body,
+        hasItem: !!props.item,
+        tabID: props.tabID,
+        hasReader: !!props.reader
+      }));
+
+      const { body, item, tabID } = props;
+      
+      if (!body) {
+        Zotero.debug('[AI Reader] No body element provided');
+        return;
+      }
+
+      // Get reader instance
+      let reader = props.reader;
+      if (!reader && tabID) {
+        reader = Zotero.Reader.getByTabID(tabID);
+      }
+
+      if (!reader) {
+        Zotero.debug('[AI Reader] Could not get reader instance');
+        // Still create a basic panel
+        this.createBasicPanel(body, item?.id || 0);
+        return;
+      }
+
+      // Build panel UI
+      const panel = this.readerPanelManager.buildPanelElement(reader);
+      body.appendChild(panel);
+
+      // Register selection menu
+      this.selectionMenuManager.registerToReader(reader);
+
+      // Create session
+      this.sessionManager.createSession(reader.itemID, reader);
+
+      Zotero.debug(`[AI Reader] Sidebar panel initialized for item ${reader.itemID}`);
+    } catch (error) {
+      Zotero.debug('[AI Reader] Failed to init sidebar panel: ' + error);
+      Zotero.logError(error);
+    }
+  }
+
+  /**
+   * Create a basic panel when reader is not available
+   */
+  private createBasicPanel(container: HTMLElement, itemID: number): void {
+    const panel = container.ownerDocument.createElement('div');
+    panel.id = `ai-reader-panel-${itemID}`;
+    panel.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    `;
+    panel.innerHTML = `
+      <h3 style="margin: 0 0 16px 0; font-size: 16px;">AI 助手</h3>
+      <p style="color: #666; margin: 0;">请在设置中配置 API Key 后使用</p>
+      <button id="ai-open-settings-${itemID}" style="margin-top: 16px; padding: 8px 16px; cursor: pointer;">
+        打开设置
+      </button>
+    `;
+    
+    container.appendChild(panel);
+
+    // Add click handler for settings button
+    const settingsBtn = panel.querySelector(`#ai-open-settings-${itemID}`);
+    settingsBtn?.addEventListener('click', () => {
+      Zotero.Utilities.Internal.openPreferences('ai-reader@zoteropatch.com');
+    });
+  }
+
+  /**
+   * Handle sidebar destroy callback
+   */
+  private handleSidebarDestroy(props: { body: HTMLElement; item: any; tabID: string; reader?: ZoteroReader }): void {
+    try {
+      Zotero.debug('[AI Reader] Sidebar destroy called');
+      
+      let reader = props.reader;
+      if (!reader && props.tabID) {
+        reader = Zotero.Reader.getByTabID(props.tabID);
+      }
+
+      if (reader) {
+        this.readerPanelManager.removePanel(reader);
+        this.selectionMenuManager.unregisterFromReader(reader);
+        this.sessionManager.removeSession(reader.itemID);
+        Zotero.debug(`[AI Reader] Sidebar panel destroyed for item ${reader.itemID}`);
+      }
+    } catch (error) {
+      Zotero.debug('[AI Reader] Failed to destroy sidebar panel: ' + error);
+    }
+  }
+
+  /**
+   * Register Zotero notifier to track events
+   */
+  private registerNotifier(): void {
+    try {
+      this.notifierID = Zotero.Notifier.registerObserver(
+        {
+          notify: async (event: string, type: string, ids: number[], extraData: any) => {
+            if (type === 'tab') {
+              Zotero.debug(`[AI Reader] Tab event: ${event}, ids: ${ids}`);
+            }
+          },
+        },
+        ['tab'],
+        'AIReader'
+      );
+      Zotero.debug('[AI Reader] Notifier registered with ID: ' + this.notifierID);
+    } catch (error) {
+      Zotero.debug('[AI Reader] Failed to register notifier: ' + error);
+    }
   }
 
   /**
    * Shutdown - called by bootstrap.js
    */
   async shutdown(): Promise<void> {
-    console.log('[AI Reader] Shutting down plugin...');
+    Zotero.debug('[AI Reader] Shutting down plugin...');
 
-    // Remove all window listeners
-    this.unregisterWindowListeners();
+    // Unregister reader sidebar section
+    if (this.unregisterReaderSection) {
+      try {
+        this.unregisterReaderSection();
+        this.unregisterReaderSection = null;
+        Zotero.debug('[AI Reader] Reader sidebar section unregistered');
+      } catch (e) {
+        Zotero.debug('[AI Reader] Error unregistering sidebar: ' + e);
+      }
+    }
+
+    // Unregister notifier
+    if (this.notifierID) {
+      Zotero.Notifier.unregisterObserver(this.notifierID);
+      this.notifierID = null;
+    }
 
     // Clean up reader panels
     this.readerPanelManager.removeAllPanels();
@@ -90,144 +315,27 @@ class AIReaderPlugin {
     // Clear LLM client
     this.llmClient = null;
 
-    console.log('[AI Reader] Plugin shutdown complete');
+    Zotero.debug('[AI Reader] Plugin shutdown complete');
   }
 
   /**
-   * Register window listeners to detect Reader window creation
+   * Get LLM client instance
    */
-  private registerWindowListeners(): void {
-    this.serviceWindowListener = {
-      onOpenWindow: (xulWindow) => {
-        const window = xulWindow.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-          .getInterface(Components.interfaces.nsIDOMWindow);
-
-        // Wait for window load
-        const loadListener = () => {
-          this.onWindowLoad(window);
-        };
-        window.addEventListener('load', loadListener, { once: true });
-
-        // Store the listener for cleanup
-        this.windowListeners.set(window, loadListener);
-      },
-    };
-
-    Services.wm.addListener(this.serviceWindowListener);
+  getLLMClient(): LLMClient | null {
+    return this.llmClient;
   }
 
   /**
-   * Handle window load event
+   * Get config manager
    */
-  private async onWindowLoad(window: Window): Promise<void> {
-    // Check if this is a Reader window
-    if (this.isReaderWindow(window)) {
-      console.log('[AI Reader] Reader window detected');
-      await this.addToWindow(window);
-    }
-  }
-
-  /**
-   * Check if window is a Reader window
-   */
-  private isReaderWindow(window: Window): boolean {
-    // Zotero Reader window detection
-    return window.location?.href?.includes('reader.html') ?? false;
-  }
-
-  /**
-   * Register to existing Reader windows
-   */
-  private async registerExistingReaders(): Promise<void> {
-    const windows = Services.wm.getEnumerator('navigator:browser');
-    while (windows.hasMoreElements()) {
-      const window = windows.getNext();
-      if (this.isReaderWindow(window)) {
-        await this.addToWindow(window);
-      }
-    }
-  }
-
-  /**
-   * Add AI Reader panel to a Reader window
-   */
-  private async addToWindow(window: Window): Promise<void> {
-    try {
-      // Get reader instance from window
-      const reader = this.getReaderFromWindow(window);
-      if (!reader) {
-        console.warn('[AI Reader] Could not get reader instance from window');
-        return;
-      }
-
-      // Create and register panel
-      await this.readerPanelManager.createPanel(reader);
-
-      // Register selection menu
-      this.selectionMenuManager.registerToReader(reader);
-
-      // Initialize session for this reader
-      this.sessionManager.createSession(reader.itemID, reader);
-
-      console.log(`[AI Reader] Panel added to reader for item ${reader.itemID}`);
-    } catch (error) {
-      console.error('[AI Reader] Failed to add panel to window:', error);
-    }
-  }
-
-  /**
-   * Remove AI Reader panel from a Reader window
-   */
-  private async removeFromWindow(window: Window): Promise<void> {
-    try {
-      const reader = this.getReaderFromWindow(window);
-      if (reader) {
-        this.readerPanelManager.removePanel(reader);
-        this.selectionMenuManager.unregisterFromReader(reader);
-        this.sessionManager.removeSession(reader.itemID);
-        console.log(`[AI Reader] Panel removed from reader for item ${reader.itemID}`);
-      }
-    } catch (error) {
-      console.error('[AI Reader] Failed to remove panel from window:', error);
-    }
-  }
-
-  /**
-   * Get Reader instance from window
-   */
-  private getReaderFromWindow(window: Window): ZoteroReader | null {
-    try {
-      // Access Zotero Reader instance from window
-      // This depends on Zotero's internal structure
-      const readers = window.Zotero?.Reader?._readers;
-      return (readers && readers.length > 0) ? readers[0] : null;
-    } catch (error) {
-      console.error('[AI Reader] Failed to get reader from window:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Unregister all window listeners
-   */
-  private unregisterWindowListeners(): void {
-    // Remove window load listeners
-    this.windowListeners.forEach((listener, window) => {
-      window.removeEventListener('load', listener);
-    });
-    this.windowListeners.clear();
-
-    // Remove service window listener
-    if (this.serviceWindowListener) {
-      Services.wm.removeListener(this.serviceWindowListener);
-      this.serviceWindowListener = null;
-    }
+  getConfigManager(): ConfigManager {
+    return this.configManager;
   }
 }
 
 // Export plugin instance to global Zotero namespace
 if (typeof Zotero !== 'undefined') {
-  Zotero.AIReader = new AIReaderPlugin();
+  (Zotero as any).AIReader = new AIReaderPlugin();
 }
 
 export default AIReaderPlugin;

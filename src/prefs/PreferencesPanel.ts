@@ -1,9 +1,13 @@
 /**
  * Preferences Panel
  * UI for managing AI Reader Assistant settings
+ * Note: Registration is now handled in src/index.ts using Zotero 7 API
  */
 
 import type { PreferencePaneConfig } from '../types';
+
+// Declare global Zotero
+declare const Zotero: any;
 
 export class PreferencesPanel {
   private readonly PREF_WINDOW_URL = 'chrome://aireader/content/preferences.xhtml';
@@ -14,24 +18,11 @@ export class PreferencesPanel {
 
   /**
    * Register preferences window
+   * Note: This is now a no-op as registration is handled in index.ts
    */
   register(): void {
-    try {
-      // Register preferences pane in Zotero preferences
-      if (typeof Zotero !== 'undefined' && Zotero.PreferencePanes) {
-        const config: PreferencePaneConfig = {
-          pluginID: 'ai-reader@zoteropatch.com',
-          src: this.PREF_WINDOW_URL,
-          label: 'AI Reader Assistant',
-          image: 'chrome://aireader/skin/icon.png',
-        };
-        Zotero.PreferencePanes.register(config);
-
-        console.log('[PreferencesPanel] Preferences pane registered');
-      }
-    } catch (error) {
-      console.error('[PreferencesPanel] Failed to register preferences:', error);
-    }
+    // Registration is now handled in src/index.ts using Zotero.PreferencePanes.register
+    console.log('[PreferencesPanel] register() called - handled by index.ts');
   }
 
   /**
@@ -41,7 +32,7 @@ export class PreferencesPanel {
     try {
       // Open Zotero preferences with AI Reader tab
       if (Zotero.Prefs?.openPreferences) {
-        Zotero.Prefs.openPreferences('aireader');
+        Zotero.Prefs.openPreferences('ai-reader@zoteropatch.com');
         console.log('[PreferencesPanel] Preferences window opened');
       }
     } catch (error) {
