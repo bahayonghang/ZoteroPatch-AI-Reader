@@ -2,6 +2,7 @@
 .windsurf/
 openspec/
 .spec-workflow/
+.kiro/
 
 # Node / package managers
 node_modules/

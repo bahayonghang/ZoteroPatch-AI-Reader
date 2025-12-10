@@ -1,266 +1,266 @@
 # ZoteroPatch AI Reader - Justfile
-# Project build and development task management
+# 项目构建和开发任务管理
 
-# Default task: show help
+# 默认任务：显示帮助
 default:
     @just --list
 
-# Show detailed help information
+# 显示详细的帮助信息
 help:
     @echo "╔══════════════════════════════════════════════════════════════════╗"
-    @echo "║         ZoteroPatch AI Reader - Command Reference               ║"
+    @echo "║         ZoteroPatch AI Reader - 命令参考                        ║"
     @echo "╚══════════════════════════════════════════════════════════════════╝"
     @echo ""
-    @echo "📦 SETUP & INSTALLATION"
-    @echo "  just install          - Install npm dependencies"
-    @echo "  just setup            - Complete setup (clean + install + build)"
-    @echo "  just prepare          - Prepare project directories"
+    @echo "📦 设置和安装"
+    @echo "  just install          - 安装 npm 依赖"
+    @echo "  just setup            - 完整设置（清理 + 安装 + 构建）"
+    @echo "  just prepare          - 准备项目目录"
     @echo ""
-    @echo "🔨 BUILD & DEVELOPMENT"
-    @echo "  just dev              - Start development mode (watch & auto-rebuild)"
-    @echo "  just build            - Build TypeScript to build/ directory"
-    @echo "                          (for development, NOT for Zotero install)"
-    @echo "  just check            - Run all checks (lint + typecheck)"
-    @echo "  just lint             - Run ESLint"
-    @echo "  just lint-fix         - Run ESLint with auto-fix"
-    @echo "  just typecheck        - Run TypeScript type check"
-    @echo "  just format           - Format code with Prettier"
+    @echo "🔨 构建和开发"
+    @echo "  just dev              - 启动开发模式（监听和自动重建）"
+    @echo "  just build            - 构建 TypeScript 到 build/ 目录"
+    @echo "                          （用于开发，不是 Zotero 安装）"
+    @echo "  just check            - 运行所有检查（lint + 类型检查）"
+    @echo "  just lint             - 运行 ESLint"
+    @echo "  just lint-fix         - 运行 ESLint 自动修复"
+    @echo "  just typecheck        - 运行 TypeScript 类型检查"
+    @echo "  just format           - 使用 Prettier 格式化代码"
     @echo ""
-    @echo "🧪 TESTING"
-    @echo "  just test             - Run tests"
-    @echo "  just test-coverage    - Run tests with coverage report"
+    @echo "🧪 测试"
+    @echo "  just test             - 运行测试"
+    @echo "  just test-coverage    - 运行测试并生成覆盖率报告"
     @echo ""
-    @echo "📦 PACKAGING FOR ZOTERO"
-    @echo "  just package          - ⭐ Build + create .xpi file for Zotero"
-    @echo "                          (Use this to create installable plugin!)"
-    @echo "  just size             - Show build size"
+    @echo "📦 Zotero 打包"
+    @echo "  just package          - ⭐ 构建 + 创建 .xpi 文件用于 Zotero"
+    @echo "                          （使用此命令创建可安装的插件！）"
+    @echo "  just size             - 显示构建大小"
     @echo ""
-    @echo "  ⚠️  IMPORTANT: To install in Zotero, use 'just package' not 'just build'"
-    @echo "      - 'just build'   → Creates build/ folder (for development)"
-    @echo "      - 'just package' → Creates .xpi file (for Zotero installation)"
+    @echo "  ⚠️  重要：要在 Zotero 中安装，请使用 'just package' 而不是 'just build'"
+    @echo "      - 'just build'   → 创建 build/ 文件夹（用于开发）"
+    @echo "      - 'just package' → 创建 .xpi 文件（用于 Zotero 安装）"
     @echo ""
-    @echo "🔧 ZOTERO INTEGRATION"
-    @echo "  just install-zotero   - Install to Zotero (needs ZOTERO_PLUGIN_DIR)"
-    @echo "  just uninstall-zotero - Uninstall from Zotero"
-    @echo "  just quick-dev        - Quick dev: build + install to Zotero"
-    @echo "                          (for rapid testing, requires env var)"
+    @echo "🔧 Zotero 集成"
+    @echo "  just install-zotero   - 安装到 Zotero（需要 ZOTERO_PLUGIN_DIR）"
+    @echo "  just uninstall-zotero - 从 Zotero 卸载"
+    @echo "  just quick-dev        - 快速开发：构建 + 安装到 Zotero"
+    @echo "                          （用于快速测试，需要环境变量）"
     @echo ""
-    @echo "📚 DOCUMENTATION"
-    @echo "  just docs-dev         - Start docs dev server"
-    @echo "  just docs-build       - Build documentation"
-    @echo "  just docs-preview     - Preview docs build"
-    @echo "  just docs-ci          - Install + build docs (CI parity)"
-    @echo "  just docs-install     - Install docs dependencies"
+    @echo "📚 文档"
+    @echo "  just docs-dev         - 启动文档开发服务器"
+    @echo "  just docs-build       - 构建文档"
+    @echo "  just docs-preview     - 预览文档构建"
+    @echo "  just docs-ci          - 安装 + 构建文档（CI 兼容）"
+    @echo "  just docs-install     - 安装文档依赖"
     @echo ""
-    @echo "🚀 RELEASE"
-    @echo "  just pre-release      - Run all checks + build + test + package"
-    @echo "  just release-patch    - Release patch version (0.1.0 -> 0.1.1)"
-    @echo "  just release-minor    - Release minor version (0.1.0 -> 0.2.0)"
-    @echo "  just release-major    - Release major version (0.1.0 -> 1.0.0)"
+    @echo "🚀 发布"
+    @echo "  just pre-release      - 运行所有检查 + 构建 + 测试 + 打包"
+    @echo "  just release-patch    - 发布补丁版本（0.1.0 -> 0.1.1）"
+    @echo "  just release-minor    - 发布次版本（0.1.0 -> 0.2.0）"
+    @echo "  just release-major    - 发布主版本（0.1.0 -> 1.0.0）"
     @echo ""
-    @echo "🧹 CLEANUP"
-    @echo "  just clean            - Clean build artifacts"
-    @echo "  just clean-all        - Clean everything (including node_modules)"
+    @echo "🧹 清理"
+    @echo "  just clean            - 清理构建产物"
+    @echo "  just clean-all        - 清理所有内容（包括 node_modules）"
     @echo ""
-    @echo "ℹ️  OTHER"
-    @echo "  just status           - Show project status"
-    @echo "  just log              - Show recent git log"
-    @echo "  just --list           - List all available commands"
+    @echo "ℹ️  其他"
+    @echo "  just status           - 显示项目状态"
+    @echo "  just log              - 显示最近的 git 日志"
+    @echo "  just --list           - 列出所有可用命令"
     @echo ""
-    @echo "💡 QUICK START:"
-    @echo "  1. First time:        just setup"
-    @echo "  2. Development:       just dev"
-    @echo "  3. Install to Zotero: just package  (creates .xpi file)"
-    @echo "  4. Test in Zotero:    Install the .xpi in Zotero → Tools → Add-ons"
+    @echo "💡 快速开始："
+    @echo "  1. 首次使用：        just setup"
+    @echo "  2. 开发：            just dev"
+    @echo "  3. 安装到 Zotero：   just package  （创建 .xpi 文件）"
+    @echo "  4. 在 Zotero 测试：  在 Zotero 中安装 .xpi → 工具 → 附加组件"
     @echo ""
-    @echo "🔑 ENVIRONMENT VARIABLES:"
-    @echo "  ZOTERO_PLUGIN_DIR - Path to Zotero extensions directory"
-    @echo "                      (required for 'just install-zotero')"
+    @echo "🔑 环境变量："
+    @echo "  ZOTERO_PLUGIN_DIR - Zotero 扩展目录的路径"
+    @echo "                      （'just install-zotero' 需要）"
     @echo ""
 
-# Install dependencies
+# 安装依赖
 install:
-    @echo "📦 Installing dependencies..."
+    @echo "📦 正在安装依赖..."
     npm install
 
-# Prepare project directories
+# 准备项目目录
 prepare:
-    @echo "🔧 Preparing project directories..."
+    @echo "🔧 正在准备项目目录..."
     npm run prepare
 
-# Development mode: watch files and auto-build
+# 开发模式：监听文件并自动构建
 dev:
-    @echo "👀 Starting development mode..."
+    @echo "👀 启动开发模式..."
     npm run build:watch
 
-# Build production version
+# 构建生产版本
 build:
-    @echo "🚀 Building production version..."
+    @echo "🚀 正在构建生产版本..."
     npm run build
 
-# Clean build artifacts
+# 清理构建产物
 clean:
-    @echo "🧹 Cleaning build artifacts..."
+    @echo "🧹 正在清理构建产物..."
     rm -rf build/ dist/ addon/ coverage/
     rm -f *.xpi *.zip
 
-# Complete clean (including node_modules)
+# 完整清理（包括 node_modules）
 clean-all: clean
-    @echo "🧹 Cleaning all artifacts and dependencies..."
+    @echo "🧹 正在清理所有产物和依赖..."
     rm -rf node_modules/
 
-# Run code linting
+# 运行代码检查
 lint:
-    @echo "🔍 Running ESLint..."
+    @echo "🔍 正在运行 ESLint..."
     npm run lint
 
-# Run linting with auto-fix
+# 运行检查并自动修复
 lint-fix:
-    @echo "🔧 Running ESLint with auto-fix..."
+    @echo "🔧 正在运行 ESLint 自动修复..."
     npx eslint src --ext .ts,.tsx --fix
 
-# Run tests
+# 运行测试
 test:
-    @echo "🧪 Running tests..."
+    @echo "🧪 正在运行测试..."
     npm test
 
-# Run tests with coverage report
+# 运行测试并生成覆盖率报告
 test-coverage:
-    @echo "📊 Running tests with coverage..."
+    @echo "📊 正在运行测试并生成覆盖率..."
     npm test -- --coverage
 
-# Run TypeScript type check
+# 运行 TypeScript 类型检查
 typecheck:
-    @echo "📝 Running TypeScript type check..."
+    @echo "📝 正在运行 TypeScript 类型检查..."
     npx tsc --noEmit
 
-# Complete check (lint + typecheck + test)
+# 完整检查（lint + typecheck + test）
 check: lint typecheck
-    @echo "✅ All checks passed!"
+    @echo "✅ 所有检查通过！"
 
-# Package plugin as .xpi file
+# 将插件打包为 .xpi 文件
 package: build
-    @echo "📦 Creating .xpi package..."
+    @echo "📦 正在创建 .xpi 包..."
     cd build && zip -r ../zoteropatch-ai-reader.xpi .
-    @echo "✅ Package created: zoteropatch-ai-reader.xpi"
+    @echo "✅ 包已创建：zoteropatch-ai-reader.xpi"
 
-# Install to Zotero (requires ZOTERO_PLUGIN_DIR env var)
+# 安装到 Zotero（需要 ZOTERO_PLUGIN_DIR 环境变量）
 install-zotero: build
-    @echo "📥 Installing to Zotero..."
+    @echo "📥 正在安装到 Zotero..."
     @if [ -z "$ZOTERO_PLUGIN_DIR" ]; then \
-        echo "❌ Error: ZOTERO_PLUGIN_DIR not set"; \
-        echo "Please set it to your Zotero profile extensions directory"; \
+        echo "❌ 错误：ZOTERO_PLUGIN_DIR 未设置"; \
+        echo "请将其设置为你的 Zotero 配置文件扩展目录"; \
         exit 1; \
     fi
     rm -rf "$ZOTERO_PLUGIN_DIR/ai-reader@zoteropatch.com"
     cp -r build "$ZOTERO_PLUGIN_DIR/ai-reader@zoteropatch.com"
-    @echo "✅ Installed to Zotero"
+    @echo "✅ 已安装到 Zotero"
 
-# Uninstall from Zotero
+# 从 Zotero 卸载
 uninstall-zotero:
-    @echo "📤 Uninstalling from Zotero..."
+    @echo "📤 正在从 Zotero 卸载..."
     @if [ -z "$ZOTERO_PLUGIN_DIR" ]; then \
-        echo "❌ Error: ZOTERO_PLUGIN_DIR not set"; \
+        echo "❌ 错误：ZOTERO_PLUGIN_DIR 未设置"; \
         exit 1; \
     fi
     rm -rf "$ZOTERO_PLUGIN_DIR/ai-reader@zoteropatch.com"
-    @echo "✅ Uninstalled from Zotero"
+    @echo "✅ 已从 Zotero 卸载"
 
-# Development workflow: clean -> install -> prepare -> build
+# 开发工作流：clean -> install -> prepare -> build
 setup: clean install prepare build
-    @echo "✅ Development environment setup complete!"
+    @echo "✅ 开发环境设置完成！"
 
-# Pre-release checks
+# 发布前检查
 pre-release: clean check build test package
-    @echo "✅ Pre-release checks passed!"
-    @echo "📦 Package ready: zoteropatch-ai-reader.xpi"
+    @echo "✅ 发布前检查通过！"
+    @echo "📦 包已准备好：zoteropatch-ai-reader.xpi"
 
-# Show project status
+# 显示项目状态
 status:
-    @echo "📊 Project Status"
-    @echo "=================="
-    @echo "Node version: $(node --version)"
-    @echo "npm version: $(npm --version)"
-    @if [ -d "node_modules" ]; then echo "✅ Dependencies installed"; else echo "❌ Dependencies not installed"; fi
-    @if [ -d "build" ]; then echo "✅ Build exists"; else echo "❌ Build not found"; fi
-    @if [ -f "zoteropatch-ai-reader.xpi" ]; then echo "✅ Package exists"; else echo "❌ Package not found"; fi
+    @echo "📊 项目状态"
+    @echo "===================="
+    @echo "Node 版本：$(node --version)"
+    @echo "npm 版本：$(npm --version)"
+    @if [ -d "node_modules" ]; then echo "✅ 依赖已安装"; else echo "❌ 依赖未安装"; fi
+    @if [ -d "build" ]; then echo "✅ 构建存在"; else echo "❌ 未找到构建"; fi
+    @if [ -f "zoteropatch-ai-reader.xpi" ]; then echo "✅ 包存在"; else echo "❌ 未找到包"; fi
 
-# Start docs development server
+# 启动文档开发服务器
 docs-dev:
-    @echo "📚 Starting docs development server..."
+    @echo "📚 启动文档开发服务器..."
     cd docs && npm run dev
 
-# Build documentation
+# 构建文档
 docs-build:
-    @echo "📚 Building docs..."
+    @echo "📚 正在构建文档..."
     cd docs && npm run build
 
-# CI-style docs build (install + build)
+# CI 风格的文档构建（安装 + 构建）
 docs-ci: docs-install docs-build
-    @echo "✅ Docs install + build complete (CI parity)"
+    @echo "✅ 文档安装 + 构建完成（CI 兼容）"
 
-# Preview docs build
+# 预览文档构建
 docs-preview:
-    @echo "📚 Previewing docs build..."
+    @echo "📚 正在预览文档构建..."
     cd docs && npm run preview
 
-# Install docs dependencies
+# 安装文档依赖
 docs-install:
-    @echo "📦 Installing docs dependencies..."
+    @echo "📦 正在安装文档依赖..."
     cd docs && npm install
 
-# Initialize documentation
+# 初始化文档
 docs-init: docs-install
-    @echo "✅ Docs initialized!"
+    @echo "✅ 文档已初始化！"
 
-# Show build size
+# 显示构建大小
 size:
-    @echo "📊 Build size analysis:"
+    @echo "📊 构建大小分析："
     @if [ -f "build/index.js" ]; then \
         du -h build/index.js; \
     else \
-        echo "❌ Build not found, run 'just build' first"; \
+        echo "❌ 未找到构建，请先运行 'just build'"; \
     fi
 
-# Format code
+# 格式化代码
 format:
-    @echo "✨ Formatting code..."
+    @echo "✨ 正在格式化代码..."
     npx prettier --write "src/**/*.{ts,tsx,js,jsx,json,md}"
 
-# Show recent git log
+# 显示最近的 git 日志
 log:
     @git log --oneline --graph --decorate -10
 
-# Bump version (private recipe)
+# 更新版本（私有任务）
 [private]
 bump-version version:
-    @echo "📝 Bumping version to {{version}}"
+    @echo "📝 正在更新版本到 {{version}}"
     npm version {{version}} --no-git-tag-version
-    @echo "✅ Version updated to {{version}}"
+    @echo "✅ 版本已更新到 {{version}}"
 
-# Release patch version (0.1.0 -> 0.1.1)
+# 发布补丁版本（0.1.0 -> 0.1.1）
 release-patch: pre-release
     @just bump-version patch
-    @echo "✅ Patch release ready!"
+    @echo "✅ 补丁版本已准备好！"
 
-# Release minor version (0.1.0 -> 0.2.0)
+# 发布次版本（0.1.0 -> 0.2.0）
 release-minor: pre-release
     @just bump-version minor
-    @echo "✅ Minor release ready!"
+    @echo "✅ 次版本已准备好！"
 
-# Release major version (0.1.0 -> 1.0.0)
+# 发布主版本（0.1.0 -> 1.0.0）
 release-major: pre-release
     @just bump-version major
-    @echo "✅ Major release ready!"
+    @echo "✅ 主版本已准备好！"
 
-# Quick dev cycle: build and install to Zotero
+# 快速开发周期：构建并安装到 Zotero
 quick-dev: build install-zotero
-    @echo "✅ Quick dev cycle complete!"
-    @echo "💡 Restart Zotero to see changes"
+    @echo "✅ 快速开发周期完成！"
+    @echo "💡 重启 Zotero 以查看更改"
 
-# Watch and auto-install to Zotero
+# 监听变更并自动安装到 Zotero
 watch-install:
-    @echo "👀 Watching for changes and auto-installing..."
+    @echo "👀 正在监听变更并自动安装..."
     @while true; do \
         npm run build:watch & \
         BUILD_PID=$$!; \
