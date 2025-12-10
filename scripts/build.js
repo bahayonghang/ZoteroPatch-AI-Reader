@@ -61,6 +61,25 @@ async function build() {
         );
       }
 
+      // Copy skin directory (icons) to build directory
+      const skinDir = path.join(__dirname, '..', 'skin');
+      const buildSkinDir = path.join(buildDir, 'skin');
+      if (fs.existsSync(skinDir)) {
+        if (!fs.existsSync(buildSkinDir)) {
+          fs.mkdirSync(buildSkinDir, { recursive: true });
+        }
+        const skinFiles = fs.readdirSync(skinDir);
+        skinFiles.forEach(file => {
+          if (file.endsWith('.svg') || file.endsWith('.png')) {
+            fs.copyFileSync(
+              path.join(skinDir, file),
+              path.join(buildSkinDir, file)
+            );
+          }
+        });
+        console.log('🎨 Icon files copied to build directory');
+      }
+
       console.log('📦 Manifest and bootstrap copied to build directory');
     }
   } catch (error) {
