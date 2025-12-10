@@ -2,17 +2,13 @@ name: Deploy Docs
 
 on:
   push:
-    branches: [main, master]
-    paths:
-      - 'docs/**'
-      - '.github/workflows/docs.yml'
+    tags:
+      - 'v*.*.*'
   workflow_dispatch:
 
 # 设置 GITHUB_TOKEN 的权限以允许部署到 GitHub Pages
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 # 只允许一个并发部署
 concurrency:
@@ -37,9 +33,6 @@ jobs:
           cache: 'npm'
           cache-dependency-path: docs/package.json
 
-      - name: 🔧 Setup Pages
-        uses: actions/configure-pages@v4
-
       - name: 📦 Install dependencies
         run: cd docs && npm install
 
@@ -47,24 +40,7 @@ jobs:
         run: cd docs && npm run build
 
       - name: 📤 Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
+          name: docs-build
           path: docs/.vitepress/dist
-
-  deploy:
-    name: Deploy to GitHub Pages
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: 🚀 Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-      - name: ✅ Deployment complete
-        run: |
-          echo "📚 Documentation deployed successfully!"
-          echo "🔗 URL: ${{ steps.deployment.outputs.page_url }}"
