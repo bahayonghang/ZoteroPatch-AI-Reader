@@ -49,6 +49,7 @@ help:
     @echo "  just docs-dev         - Start docs dev server"
     @echo "  just docs-build       - Build documentation"
     @echo "  just docs-preview     - Preview docs build"
+    @echo "  just docs-ci          - Install + build docs (CI parity)"
     @echo "  just docs-install     - Install docs dependencies"
     @echo ""
     @echo "🚀 RELEASE"
@@ -193,6 +194,10 @@ docs-dev:
 docs-build:
     @echo "📚 Building docs..."
     cd docs && npm run build
+
+# CI-style docs build (install + build)
+docs-ci: docs-install docs-build
+    @echo "✅ Docs install + build complete (CI parity)"
 
 # Preview docs build
 docs-preview:

@@ -97,10 +97,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: 📦 Install docs dependencies
-        run: cd docs && npm ci
+        run: cd docs && npm install
 
       - name: 📚 Build documentation
         run: cd docs && npm run build
