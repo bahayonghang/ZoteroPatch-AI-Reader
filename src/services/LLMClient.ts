@@ -258,6 +258,67 @@ export class LLMClient {
   }
 
   /**
+   * Test connection to LLM API
+   * Sends a minimal request to verify API connectivity and credentials
+   */
+  async testConnection(): Promise<{ success: boolean; message: string; error?: string }> {
+    console.log('[LLMClient] Testing connection...');
+
+    try {
+      // Send a minimal test message
+      const testMessages: ChatMessage[] = [
+        {
+          id: Date.now().toString(),
+          role: 'user',
+          content: 'Hello',
+          timestamp: Date.now(),
+        },
+      ];
+
+      // Use a shorter timeout for connection test
+      const originalTimeout = this.options.timeout;
+      this.options.timeout = 10000; // 10 seconds for test
+
+      try {
+        await this.sendRequest(testMessages);
+        this.options.timeout = originalTimeout;
+
+        console.log('[LLMClient] Connection test successful');
+        return {
+          success: true,
+          message: '连接成功！API 配置正确。',
+        };
+      } catch (error) {
+        this.options.timeout = originalTimeout;
+        throw error;
+      }
+    } catch (error) {
+      console.error('[LLMClient] Connection test failed:', error);
+
+      let errorMessage = '连接失败';
+      if (error instanceof Error) {
+        if (error.message.includes('401') || error.message.includes('403')) {
+          errorMessage = 'API Key 无效或未授权';
+        } else if (error.message.includes('404')) {
+          errorMessage = 'API 端点不存在，请检查 URL';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = '连接超时，请检查网络或端点地址';
+        } else if (error.message.includes('Network error')) {
+          errorMessage = '网络错误，请检查网络连接';
+        } else {
+          errorMessage = `连接失败: ${error.message}`;
+        }
+      }
+
+      return {
+        success: false,
+        message: errorMessage,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  /**
    * Update client options
    */
   updateOptions(options: Partial<LLMClientOptions>): void {
