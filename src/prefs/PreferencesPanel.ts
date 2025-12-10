@@ -4,11 +4,6 @@
  * Note: Registration is now handled in src/index.ts using Zotero 7 API
  */
 
-import type { PreferencePaneConfig } from '../types';
-
-// Declare global Zotero
-declare const Zotero: any;
-
 export class PreferencesPanel {
   private readonly PREF_WINDOW_URL = 'chrome://aireader/content/preferences.xhtml';
 

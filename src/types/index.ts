@@ -7,23 +7,78 @@
  * Zotero global object interface
  */
 interface ZoteroGlobal {
-  Reader?: {
+  Reader: {
     _readers?: ZoteroReader[];
+    registerSidebarSection?(config: {
+      paneID: string;
+      id: string;
+      title: string;
+      index?: number;
+      icon?: string;
+      init: (props: {
+        body: HTMLElement;
+        tabID: string;
+        reader?: ZoteroReader;
+        item?: { id?: number };
+      }) => void;
+      destroy?: (props: {
+        body: HTMLElement;
+        tabID: string;
+        reader?: ZoteroReader;
+        item?: { id?: number };
+      }) => void;
+    }): () => void;
+    _registerSidebarSection?(config: {
+      paneID: string;
+      id: string;
+      title: string;
+      init: (props: {
+        body: HTMLElement;
+        tabID: string;
+        reader?: ZoteroReader;
+        item?: { id?: number };
+      }) => void;
+      destroy?: (props: {
+        body: HTMLElement;
+        tabID: string;
+        reader?: ZoteroReader;
+        item?: { id?: number };
+      }) => void;
+    }): () => void;
+    getByTabID?(tabID: string): ZoteroReader | undefined;
   };
   AIReader?: unknown;
-  Prefs?: {
+  Prefs: {
     get(key: string, defaultValue?: unknown): unknown;
     set(key: string, value: unknown, global?: boolean): void;
     openPreferences?(paneID: string): void;
   };
-  PreferencePanes?: {
-    register(paneConfig: PreferencePaneConfig): void;
+  PreferencePanes: {
+    register(paneConfig: PreferencePaneConfig): string;
   };
-  Items?: {
+  Items: {
     get(itemID: number): ZoteroItem;
     getAsync(itemID: number): Promise<ZoteroItem>;
   };
   Item?: new (type: string) => ZoteroNoteItem;
+  Notifier: {
+    registerObserver(
+      observer: {
+        notify(event: string, type: string, ids: number[], extraData?: unknown): void | Promise<void>;
+      },
+      types: string[],
+      name: string
+    ): string;
+    unregisterObserver(observerID: string): void;
+  };
+  Utilities: {
+    Internal?: {
+      openPreferences?(paneID: string): void;
+    };
+  };
+  debug(...args: unknown[]): void;
+  logError(error: unknown): void;
+  uiReadyPromise?: Promise<void>;
   [key: string]: unknown;
 }
 

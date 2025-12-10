@@ -6,12 +6,19 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import * as fc from 'fast-check';
 import { ConfigManager } from './ConfigManager';
-import type { PluginConfig } from '../types';
+import type { PluginConfig, PromptTemplates } from '../types';
 
 // Mock Zotero global
 const mockPrefs = new Map<string, unknown>();
 
-(globalThis as any).Zotero = {
+interface MockZoteroGlobal {
+  Prefs: {
+    get(key: string, global?: boolean): unknown;
+    set(key: string, value: unknown, global?: boolean): void;
+  };
+}
+
+(globalThis as unknown as { Zotero: MockZoteroGlobal }).Zotero = {
   Prefs: {
     get: (key: string, _global?: boolean) => mockPrefs.get(key),
     set: (key: string, value: unknown, _global?: boolean) => {
@@ -44,7 +51,7 @@ describe('ConfigManager Property-Based Tests', () => {
       fc.constant('just some text'),
       fc.constant('://missing-protocol'),
       fc.constant('http://'),
-      fc.string().filter(s => {
+      fc.string().filter((s: string) => {
         try {
           new URL(s);
           return false;
@@ -144,7 +151,7 @@ describe('ConfigManager Property-Based Tests', () => {
    */
   it('Property 4: Template reset idempotence', async () => {
     // Default template values (must match ConfigManager)
-    const DEFAULT_TEMPLATES = {
+    const DEFAULT_TEMPLATES: PromptTemplates = {
       translation: `请将以下文本翻译成{{language}}：\n\n{{text}}`,
       summary: `请为以下文本生成简洁的摘要：\n\n{{text}}`,
       keyPoints: `请提取以下文本的关键要点：\n\n{{text}}`,
@@ -166,7 +173,7 @@ describe('ConfigManager Property-Based Tests', () => {
       fc.asyncProperty(
         templateTypeArbitrary,
         customTemplateArbitrary,
-        async (templateType, customContent) => {
+        async (templateType: keyof PromptTemplates, customContent: string) => {
           // Load initial config
           await configManager.load();
 

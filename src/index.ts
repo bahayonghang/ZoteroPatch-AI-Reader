@@ -11,12 +11,6 @@ import { LLMClient } from './services/LLMClient';
 import { NotesSyncService } from './services/NotesSyncService';
 import type { ZoteroReader } from './types';
 
-// Declare global Zotero types
-declare const Zotero: any;
-declare const Services: any;
-declare const Components: any;
-declare const ChromeUtils: any;
-
 class AIReaderPlugin {
   private readerPanelManager: ReaderPanelManager;
   private selectionMenuManager: SelectionMenuManager;
@@ -159,7 +153,7 @@ class AIReaderPlugin {
   /**
    * Handle sidebar init callback
    */
-  private handleSidebarInit(props: { body: HTMLElement; item: any; tabID: string; reader?: ZoteroReader }): void {
+  private handleSidebarInit(props: { body: HTMLElement; item?: { id?: number }; tabID: string; reader?: ZoteroReader }): void {
     try {
       Zotero.debug('[AI Reader] Sidebar init called with props: ' + JSON.stringify({
         hasBody: !!props.body,
@@ -178,7 +172,7 @@ class AIReaderPlugin {
       // Get reader instance
       let reader = props.reader;
       if (!reader && tabID) {
-        reader = Zotero.Reader.getByTabID(tabID);
+        reader = Zotero.Reader.getByTabID?.(tabID);
       }
 
       if (!reader) {
@@ -231,20 +225,20 @@ class AIReaderPlugin {
     // Add click handler for settings button
     const settingsBtn = panel.querySelector(`#ai-open-settings-${itemID}`);
     settingsBtn?.addEventListener('click', () => {
-      Zotero.Utilities.Internal.openPreferences('ai-reader@zoteropatch.com');
+      Zotero.Utilities.Internal?.openPreferences?.('ai-reader@zoteropatch.com');
     });
   }
 
   /**
    * Handle sidebar destroy callback
    */
-  private handleSidebarDestroy(props: { body: HTMLElement; item: any; tabID: string; reader?: ZoteroReader }): void {
+  private handleSidebarDestroy(props: { body: HTMLElement; tabID: string; reader?: ZoteroReader }): void {
     try {
       Zotero.debug('[AI Reader] Sidebar destroy called');
       
       let reader = props.reader;
       if (!reader && props.tabID) {
-        reader = Zotero.Reader.getByTabID(props.tabID);
+        reader = Zotero.Reader.getByTabID?.(props.tabID);
       }
 
       if (reader) {
@@ -265,7 +259,7 @@ class AIReaderPlugin {
     try {
       this.notifierID = Zotero.Notifier.registerObserver(
         {
-          notify: async (event: string, type: string, ids: number[], extraData: any) => {
+          notify: async (event: string, type: string, ids: number[], _extraData: unknown) => {
             if (type === 'tab') {
               Zotero.debug(`[AI Reader] Tab event: ${event}, ids: ${ids}`);
             }
@@ -335,7 +329,7 @@ class AIReaderPlugin {
 
 // Export plugin instance to global Zotero namespace
 if (typeof Zotero !== 'undefined') {
-  (Zotero as any).AIReader = new AIReaderPlugin();
+  Zotero.AIReader = new AIReaderPlugin();
 }
 
 export default AIReaderPlugin;

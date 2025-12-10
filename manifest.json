@@ -9,8 +9,8 @@
     "zotero": {
       "id": "ai-reader@zoteropatch.com",
       "update_url": "https://raw.githubusercontent.com/bahayonghang/ZoteroPatch-AI-Reader/main/updates.json",
-      "strict_min_version": "7.0",
-      "strict_max_version": "7.99"
+      "strict_min_version": "7.0.0",
+      "strict_max_version": "7.*"
     }
   },
   "icons": {

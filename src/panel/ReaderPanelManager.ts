@@ -5,8 +5,15 @@
 
 import type { ZoteroReader } from '../types';
 
-// Declare global Zotero
-declare const Zotero: any;
+interface LLMClientLike {
+  chat(messages: { id: string; role: 'user' | 'assistant' | 'system'; content: string; timestamp: number }[]): Promise<{
+    content: string;
+  }>;
+}
+
+interface AIReaderGlobalLike {
+  getLLMClient?(): LLMClientLike | null;
+}
 
 export class ReaderPanelManager {
   private panels: Map<number, HTMLElement>;
@@ -248,7 +255,8 @@ export class ReaderPanelManager {
     loadingElement: HTMLElement
   ): Promise<void> {
     try {
-      const llmClient = (Zotero as any).AIReader?.getLLMClient?.();
+      const aiReader = Zotero.AIReader as AIReaderGlobalLike | undefined;
+      const llmClient = aiReader?.getLLMClient?.();
       if (!llmClient) {
         loadingElement.textContent = '请先在设置中配置 API Key';
         loadingElement.style.color = '#cc0000';
@@ -280,7 +288,8 @@ export class ReaderPanelManager {
     summaryContent.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;">正在生成摘要...</p>';
 
     try {
-      const llmClient = (Zotero as any).AIReader?.getLLMClient?.();
+      const aiReader = Zotero.AIReader as AIReaderGlobalLike | undefined;
+      const llmClient = aiReader?.getLLMClient?.();
       if (!llmClient) {
         summaryContent.innerHTML = '<p style="color: #cc0000; text-align: center; padding: 20px;">请先在设置中配置 API Key</p>';
         return;
