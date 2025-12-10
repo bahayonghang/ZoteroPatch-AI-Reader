@@ -3,11 +3,18 @@
  * Manages plugin preferences stored in Zotero's preference system
  */
 
-import type { PluginConfig } from '../types';
+import type { PluginConfig, PromptTemplates } from '../types';
 
 export class ConfigManager {
   private readonly PREF_PREFIX = 'extensions.aireader.';
   private config: PluginConfig | null = null;
+
+  private readonly DEFAULT_TEMPLATES: PromptTemplates = {
+    translation: `请将以下文本翻译成{{language}}：\n\n{{text}}`,
+    summary: `请为以下文本生成简洁的摘要：\n\n{{text}}`,
+    keyPoints: `请提取以下文本的关键要点：\n\n{{text}}`,
+    qa: `基于以下上下文回答问题：\n\n上下文：{{context}}\n\n问题：{{question}}`
+  };
 
   constructor() {
     console.log('[ConfigManager] Initialized');
@@ -27,6 +34,7 @@ export class ConfigManager {
         enableTranslation: this.getPref('enableTranslation', true),
         enableSummary: this.getPref('enableSummary', true),
         enableQA: this.getPref('enableQA', true),
+        templates: this.loadTemplates(),
       };
 
       console.log('[ConfigManager] Configuration loaded');
@@ -46,12 +54,26 @@ export class ConfigManager {
         await this.load();
       }
 
+      // Validate API Endpoint URL if provided
+      if (config.apiEndpoint !== undefined && !this.isValidUrl(config.apiEndpoint)) {
+        throw new Error('Invalid API Endpoint URL format');
+      }
+
+      // Clamp temperature to valid range [0, 2]
+      if (config.temperature !== undefined) {
+        config.temperature = this.clampTemperature(config.temperature);
+      }
+
       // Update config
       this.config = { ...this.config!, ...config };
 
       // Save to preferences
       Object.entries(config).forEach(([key, value]) => {
-        this.setPref(key, value);
+        if (key === 'templates') {
+          this.saveTemplates(value as PromptTemplates);
+        } else {
+          this.setPref(key, value as string | number | boolean);
+        }
       });
 
       console.log('[ConfigManager] Configuration saved');
@@ -154,11 +176,26 @@ export class ConfigManager {
    */
   private isValidUrl(url: string): boolean {
     try {
-      new URL(url);
-      return true;
+      const parsedUrl = new URL(url);
+      // Only accept HTTP and HTTPS protocols for API endpoints
+      return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Clamp temperature value to valid range [0, 2]
+   */
+  private clampTemperature(temperature: number): number {
+    return Math.max(0, Math.min(2, temperature));
+  }
+
+  /**
+   * Validate URL format (public method for external validation)
+   */
+  validateUrl(url: string): boolean {
+    return this.isValidUrl(url);
   }
 
   /**
@@ -174,9 +211,90 @@ export class ConfigManager {
       enableTranslation: true,
       enableSummary: true,
       enableQA: true,
+      templates: { ...this.DEFAULT_TEMPLATES },
     };
 
     await this.save(defaultConfig);
     console.log('[ConfigManager] Configuration reset to defaults');
+  }
+
+  /**
+   * Load templates from preferences
+   */
+  private loadTemplates(): PromptTemplates {
+    try {
+      const templatesJson = this.getPref('templates', '') as string;
+      if (templatesJson && templatesJson.trim() !== '') {
+        const parsed = JSON.parse(templatesJson);
+        return {
+          translation: parsed.translation || this.DEFAULT_TEMPLATES.translation,
+          summary: parsed.summary || this.DEFAULT_TEMPLATES.summary,
+          keyPoints: parsed.keyPoints || this.DEFAULT_TEMPLATES.keyPoints,
+          qa: parsed.qa || this.DEFAULT_TEMPLATES.qa,
+        };
+      }
+    } catch (error) {
+      console.warn('[ConfigManager] Failed to parse templates, using defaults:', error);
+    }
+    return { ...this.DEFAULT_TEMPLATES };
+  }
+
+  /**
+   * Save templates to preferences
+   */
+  private saveTemplates(templates: PromptTemplates): void {
+    try {
+      const templatesJson = JSON.stringify(templates);
+      this.setPref('templates', templatesJson);
+    } catch (error) {
+      console.error('[ConfigManager] Failed to save templates:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get a specific template
+   */
+  getTemplate(type: keyof PromptTemplates): string {
+    if (!this.config) {
+      throw new Error('Configuration not loaded. Call load() first.');
+    }
+    return this.config.templates[type];
+  }
+
+  /**
+   * Update a specific template
+   */
+  async updateTemplate(type: keyof PromptTemplates, content: string): Promise<void> {
+    if (!this.config) {
+      await this.load();
+    }
+    this.config!.templates[type] = content;
+    this.saveTemplates(this.config!.templates);
+    console.log(`[ConfigManager] Template ${type} updated`);
+  }
+
+  /**
+   * Reset a specific template to default
+   */
+  async resetTemplate(type: keyof PromptTemplates): Promise<void> {
+    if (!this.config) {
+      await this.load();
+    }
+    this.config!.templates[type] = this.DEFAULT_TEMPLATES[type];
+    this.saveTemplates(this.config!.templates);
+    console.log(`[ConfigManager] Template ${type} reset to default`);
+  }
+
+  /**
+   * Reset all templates to defaults
+   */
+  async resetAllTemplates(): Promise<void> {
+    if (!this.config) {
+      await this.load();
+    }
+    this.config!.templates = { ...this.DEFAULT_TEMPLATES };
+    this.saveTemplates(this.config!.templates);
+    console.log('[ConfigManager] All templates reset to defaults');
   }
 }

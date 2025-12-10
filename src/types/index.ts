@@ -141,6 +141,16 @@ export interface ZoteroReader {
 }
 
 /**
+ * Prompt templates interface
+ */
+export interface PromptTemplates {
+  translation: string;
+  summary: string;
+  keyPoints: string;
+  qa: string;
+}
+
+/**
  * Plugin configuration interface
  */
 export interface PluginConfig {
@@ -152,6 +162,7 @@ export interface PluginConfig {
   enableTranslation: boolean;
   enableSummary: boolean;
   enableQA: boolean;
+  templates: PromptTemplates;
 }
 
 /**
