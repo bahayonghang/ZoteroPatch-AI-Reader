@@ -1,0 +1,7 @@
+content aireader chrome/content/
+skin aireader classic/1.0 chrome/skin/
+locale aireader en-US chrome/locale/en-US/
+locale aireader zh-CN chrome/locale/zh-CN/
+
+# Register skin resources
+skin aireader classic/1.0 skin/

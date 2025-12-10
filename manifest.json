@@ -3,13 +3,19 @@
   "name": "ZoteroPatch AI Reader",
   "version": "0.1.0",
   "description": "AI助手增强Zotero 7 PDF阅读器：翻译、摘要、结构化要点、问答与笔记写回",
-  "homepage_url": "https://github.com/yourusername/ZoteroPatch-AI-Reader",
+  "homepage_url": "https://github.com/bahayonghang/ZoteroPatch-AI-Reader",
   "author": "Your Name",
   "applications": {
     "zotero": {
       "id": "ai-reader@zoteropatch.com",
-      "update_url": "https://raw.githubusercontent.com/yourusername/ZoteroPatch-AI-Reader/main/updates.json",
-      "strict_min_version": "7.0.0"
+      "update_url": "https://raw.githubusercontent.com/bahayonghang/ZoteroPatch-AI-Reader/main/updates.json",
+      "strict_min_version": "7.0",
+      "strict_max_version": "7.99"
     }
+  },
+  "icons": {
+    "16": "skin/icon-16.svg",
+    "32": "skin/icon-32.svg",
+    "48": "skin/icon-48.svg"
   }
 }

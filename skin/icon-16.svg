@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <defs>
+    <style>
+      .icon-color { fill: #4A90D9; }
+      @media (prefers-color-scheme: dark) {
+        .icon-color { fill: #6BA3E8; }
+      }
+    </style>
+  </defs>
+  
+  <!-- Book outline -->
+  <path class="icon-color" d="M3 2 C3 1.5 3.5 1 4 1 L12 1 C12.5 1 13 1.5 13 2 L13 14 C13 14.5 12.5 15 12 15 L4 15 C3.5 15 3 14.5 3 14 Z" fill="none" stroke="currentColor" stroke-width="1"/>
+  
+  <!-- Book spine -->
+  <line x1="5" y1="1" x2="5" y2="15" stroke="currentColor" stroke-width="1"/>
+  
+  <!-- Neural network nodes -->
+  <circle class="icon-color" cx="8" cy="5" r="1"/>
+  <circle class="icon-color" cx="6.5" cy="8" r="1"/>
+  <circle class="icon-color" cx="8" cy="8" r="1"/>
+  <circle class="icon-color" cx="9.5" cy="8" r="1"/>
+  <circle class="icon-color" cx="8" cy="11" r="1"/>
+  
+  <!-- Neural network connections -->
+  <line x1="8" y1="5" x2="6.5" y2="8" stroke="currentColor" stroke-width="0.5" opacity="0.5"/>
+  <line x1="8" y1="5" x2="8" y2="8" stroke="currentColor" stroke-width="0.5" opacity="0.5"/>
+  <line x1="8" y1="5" x2="9.5" y2="8" stroke="currentColor" stroke-width="0.5" opacity="0.5"/>
+  <line x1="6.5" y1="8" x2="8" y2="11" stroke="currentColor" stroke-width="0.5" opacity="0.5"/>
+  <line x1="8" y1="8" x2="8" y2="11" stroke="currentColor" stroke-width="0.5" opacity="0.5"/>
+  <line x1="9.5" y1="8" x2="8" y2="11" stroke="currentColor" stroke-width="0.5" opacity="0.5"/>
+</svg>
