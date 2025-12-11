@@ -1,14 +1,14 @@
 # ZoteroPatch AI Reader
 
-> Enhance the Zotero 7 PDF reader with an AI assistant
+> Enhance the Zotero 7/8 PDF reader with an AI assistant
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Zotero](https://img.shields.io/badge/Zotero-7.0+-red.svg)](https://www.zotero.org/)
+[![Zotero](https://img.shields.io/badge/Zotero-7.0%20%7C%208.x-red.svg)](https://www.zotero.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue.svg)](https://www.typescriptlang.org/)
 
 ## ✨ Features
 
-ZoteroPatch AI Reader is a plugin for the Zotero 7 PDF reader that adds a powerful AI assistant in the right sidebar:
+ZoteroPatch AI Reader is a plugin for the Zotero 7/8 PDF reader that adds a powerful AI assistant in the right sidebar:
 
 - 🌐 **Smart Translation** – Translate selected text quickly with multi-language support
 - 📝 **Auto Summary** – One-click structured paper summary
@@ -20,7 +20,7 @@ ZoteroPatch AI Reader is a plugin for the Zotero 7 PDF reader that adds a powerf
 
 ### Requirements
 
-- Zotero 7.0 or later
+- Zotero 7.0+ or Zotero 8.x
 - An OpenAI-compatible API key (OpenAI, domestic models, or local deployments)
 
 ### Installation

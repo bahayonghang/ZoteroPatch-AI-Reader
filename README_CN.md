@@ -1,14 +1,14 @@
 # ZoteroPatch AI Reader
 
-> 为 Zotero 7 PDF 阅读器增强 AI 助手功能
+> 为 Zotero 7/8 PDF 阅读器增强 AI 助手功能
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Zotero](https://img.shields.io/badge/Zotero-7.0+-red.svg)](https://www.zotero.org/)
+[![Zotero](https://img.shields.io/badge/Zotero-7.0%20%7C%208.x-red.svg)](https://www.zotero.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue.svg)](https://www.typescriptlang.org/)
 
 ## ✨ 功能特性
 
-ZoteroPatch AI Reader 是一个为 Zotero 7 PDF 阅读器设计的插件，在右侧栏提供强大的 AI 助手功能：
+ZoteroPatch AI Reader 是一个为 Zotero 7/8 PDF 阅读器设计的插件，在右侧栏提供强大的 AI 助手功能：
 
 - 🌐 **智能翻译** - 选中文本即可快速翻译，支持多语言
 - 📝 **自动摘要** - 一键生成论文摘要，快速把握核心内容
@@ -20,7 +20,7 @@ ZoteroPatch AI Reader 是一个为 Zotero 7 PDF 阅读器设计的插件，在�
 
 ### 系统要求
 
-- Zotero 7.0 或更高版本
+- Zotero 7.0+ 或 Zotero 8.x
 - 一个 OpenAI 兼容的 API Key（OpenAI、国产大模型、本地部署等）
 
 ### 安装方法
