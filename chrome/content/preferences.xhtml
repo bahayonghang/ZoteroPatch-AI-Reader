@@ -1,63 +1,698 @@
 <?xml version="1.0"?>
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
 <?xml-stylesheet href="chrome://zotero/skin/preferences.css" type="text/css"?>
+<?xml-stylesheet href="chrome://aireader/content/theme.css" type="text/css"?>
 
 <vbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
       xmlns:html="http://www.w3.org/1999/xhtml"
-      id="aireader-prefs">
+      id="aireader-prefs"
+      style="padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
 
+  <!-- ============================================
+       基本设置
+       ============================================ -->
   <groupbox>
-    <label><html:h2>API 设置</html:h2></label>
+    <label><html:h2 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">API 设置</html:h2></label>
 
-    <hbox align="center">
-      <label value="API Key:" style="width: 100px;"/>
-      <html:input id="aireader-apiKey" type="password" 
-                  placeholder="输入您的 API Key" style="flex: 1;"/>
+    <vbox style="gap: 12px;">
+      <!-- API Key -->
+      <hbox align="center" style="gap: 12px;">
+        <label value="API Key:" style="width: 100px; font-size: 13px;"/>
+        <html:input id="aireader-apiKey" type="password" 
+                    placeholder="输入您的 API Key" 
+                    style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px;"/>
+      </hbox>
+
+      <!-- API 端点 -->
+      <hbox align="center" style="gap: 12px;">
+        <label value="API 端点:" style="width: 100px; font-size: 13px;"/>
+        <html:input id="aireader-apiEndpoint" type="text"
+                    placeholder="https://api.openai.com/v1" 
+                    style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px;"/>
+      </hbox>
+
+      <!-- 模型选择 -->
+      <hbox align="center" style="gap: 12px;">
+        <label value="模型:" style="width: 100px; font-size: 13px;"/>
+        <menulist id="aireader-model" style="flex: 1;">
+          <menupopup>
+            <menuitem label="gpt-3.5-turbo" value="gpt-3.5-turbo"/>
+            <menuitem label="gpt-4" value="gpt-4"/>
+            <menuitem label="gpt-4-turbo" value="gpt-4-turbo"/>
+            <menuitem label="gpt-4o" value="gpt-4o"/>
+            <menuitem label="gpt-4o-mini" value="gpt-4o-mini"/>
+            <menuitem label="claude-3-5-sonnet" value="claude-3-5-sonnet-20241022"/>
+            <menuitem label="自定义模型" value="custom"/>
+          </menupopup>
+        </menulist>
+      </hbox>
+
+      <!-- 自定义模型输入 (默认隐藏) -->
+      <hbox id="aireader-customModel-row" align="center" style="gap: 12px; display: none;">
+        <label value="自定义模型:" style="width: 100px; font-size: 13px;"/>
+        <html:input id="aireader-customModel" type="text"
+                    placeholder="输入模型名称，如 qwen-turbo" 
+                    style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px;"/>
+      </hbox>
+
+      <!-- 温度 -->
+      <hbox align="center" style="gap: 12px;">
+        <label value="温度 (0-2):" style="width: 100px; font-size: 13px;"/>
+        <html:input id="aireader-temperature" type="range" min="0" max="2" step="0.1" value="0.7"
+                    style="flex: 1; height: 4px;"/>
+        <label id="aireader-temperature-value" value="0.7" style="width: 40px; text-align: center; font-size: 13px;"/>
+      </hbox>
+
+      <!-- 测试连接按钮 -->
+      <hbox style="gap: 8px; margin-top: 8px;">
+        <button id="aireader-testConnection" label="测试连接" 
+                style="padding: 8px 16px; border-radius: 6px; cursor: pointer;"/>
+        <label id="aireader-testResult" value="" style="font-size: 13px; padding: 8px;"/>
+      </hbox>
+    </vbox>
+  </groupbox>
+
+  <!-- ============================================
+       功能设置
+       ============================================ -->
+  <groupbox>
+    <label><html:h2 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">功能设置</html:h2></label>
+
+    <vbox style="gap: 8px;">
+      <checkbox id="aireader-enableTranslation" label="启用翻译功能" checked="true"/>
+      <checkbox id="aireader-enableSummary" label="启用摘要功能" checked="true"/>
+      <checkbox id="aireader-enableQA" label="启用问答功能" checked="true"/>
+      <checkbox id="aireader-enableStreaming" label="启用流式输出" checked="true"/>
+      <checkbox id="aireader-autoSaveHistory" label="自动保存聊天历史到笔记" checked="false"/>
+
+      <hbox align="center" style="gap: 12px; margin-top: 8px;">
+        <label value="默认语言:" style="width: 100px; font-size: 13px;"/>
+        <menulist id="aireader-defaultLanguage" style="flex: 1;">
+          <menupopup>
+            <menuitem label="简体中文" value="zh-CN"/>
+            <menuitem label="繁体中文" value="zh-TW"/>
+            <menuitem label="English" value="en"/>
+            <menuitem label="日本語" value="ja"/>
+            <menuitem label="한국어" value="ko"/>
+            <menuitem label="Français" value="fr"/>
+            <menuitem label="Deutsch" value="de"/>
+          </menupopup>
+        </menulist>
+      </hbox>
+    </vbox>
+  </groupbox>
+
+  <!-- ============================================
+       Prompt 模板
+       ============================================ -->
+  <groupbox>
+    <label><html:h2 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">Prompt 模板</html:h2></label>
+
+    <vbox style="gap: 12px;">
+      <!-- 模板列表 -->
+      <hbox style="gap: 12px;">
+        <vbox style="width: 200px;">
+          <label value="模板列表:" style="font-size: 13px; margin-bottom: 4px;"/>
+          <html:div id="aireader-template-list" 
+                    style="height: 150px; overflow-y: auto; border: 1px solid #ccc; border-radius: 6px; background: #fff;">
+          </html:div>
+          <hbox style="gap: 4px; margin-top: 8px;">
+            <button id="aireader-addTemplate" label="添加" style="flex: 1;"/>
+            <button id="aireader-deleteTemplate" label="删除" style="flex: 1;"/>
+          </hbox>
+        </vbox>
+
+        <!-- 模板编辑器 -->
+        <vbox style="flex: 1;">
+          <hbox align="center" style="gap: 8px; margin-bottom: 8px;">
+            <label value="模板名称:" style="font-size: 13px;"/>
+            <html:input id="aireader-templateName" type="text" placeholder="模板名称"
+                        style="flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;"/>
+            <label value="类型:" style="font-size: 13px;"/>
+            <menulist id="aireader-templateType" style="width: 120px;">
+              <menupopup>
+                <menuitem label="翻译" value="translation"/>
+                <menuitem label="摘要" value="summary"/>
+                <menuitem label="要点" value="keyPoints"/>
+                <menuitem label="问答" value="qa"/>
+                <menuitem label="自定义" value="custom"/>
+              </menupopup>
+            </menulist>
+          </hbox>
+          <html:textarea id="aireader-templateContent" 
+                         placeholder="输入模板内容，使用 {{变量}} 作为占位符..."
+                         style="flex: 1; min-height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; font-family: inherit; resize: vertical;">
+          </html:textarea>
+        </vbox>
+      </hbox>
+
+      <!-- 占位符说明 -->
+      <vbox style="padding: 12px; background: #f5f5f5; border-radius: 6px;">
+        <label style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">可用占位符变量:</label>
+        <html:div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 16px; font-size: 12px;">
+          <html:div><html:code style="color: #0066cc; cursor: pointer;" class="placeholder-var">{{text}}</html:code> - 选中的文本</html:div>
+          <html:div><html:code style="color: #0066cc; cursor: pointer;" class="placeholder-var">{{language}}</html:code> - 目标语言</html:div>
+          <html:div><html:code style="color: #0066cc; cursor: pointer;" class="placeholder-var">{{context}}</html:code> - 上下文内容</html:div>
+          <html:div><html:code style="color: #0066cc; cursor: pointer;" class="placeholder-var">{{question}}</html:code> - 用户问题</html:div>
+          <html:div><html:code style="color: #0066cc; cursor: pointer;" class="placeholder-var">{{title}}</html:code> - 文档标题</html:div>
+          <html:div><html:code style="color: #0066cc; cursor: pointer;" class="placeholder-var">{{author}}</html:code> - 文档作者</html:div>
+        </html:div>
+      </vbox>
+    </vbox>
+  </groupbox>
+
+  <!-- ============================================
+       高级设置 (可折叠)
+       ============================================ -->
+  <groupbox id="aireader-advanced-section">
+    <hbox id="aireader-advanced-header" align="center" style="cursor: pointer; padding: 4px 0;">
+      <label style="font-size: 16px; font-weight: 600; flex: 1;">高级设置</label>
+      <label id="aireader-advanced-icon" value="▼" style="font-size: 12px;"/>
     </hbox>
 
-    <hbox align="center">
-      <label value="API 端点:" style="width: 100px;"/>
-      <html:input id="aireader-apiEndpoint" type="text"
-                  placeholder="https://api.openai.com/v1" style="flex: 1;"/>
-    </hbox>
+    <vbox id="aireader-advanced-content" style="display: none; margin-top: 12px; gap: 12px;">
+      <!-- Max Tokens -->
+      <hbox align="center" style="gap: 12px;">
+        <label value="Max Tokens:" style="width: 100px; font-size: 13px;"/>
+        <html:input id="aireader-maxTokens" type="number" min="100" max="32000" value="2000"
+                    style="width: 120px; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px;"/>
+        <label value="(100-32000)" style="font-size: 12px; color: #666;"/>
+      </hbox>
 
-    <hbox align="center">
-      <label value="模型:" style="width: 100px;"/>
-      <menulist id="aireader-model">
-        <menupopup>
-          <menuitem label="gpt-3.5-turbo" value="gpt-3.5-turbo"/>
-          <menuitem label="gpt-4" value="gpt-4"/>
-          <menuitem label="gpt-4-turbo" value="gpt-4-turbo"/>
-          <menuitem label="自定义模型" value="custom"/>
-        </menupopup>
-      </menulist>
-    </hbox>
+      <!-- 请求超时 -->
+      <hbox align="center" style="gap: 12px;">
+        <label value="请求超时:" style="width: 100px; font-size: 13px;"/>
+        <html:input id="aireader-timeout" type="number" min="5" max="300" value="30"
+                    style="width: 120px; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px;"/>
+        <label value="秒 (5-300)" style="font-size: 12px; color: #666;"/>
+      </hbox>
 
-    <hbox align="center">
-      <label value="温度 (0-2):" style="width: 100px;"/>
-      <html:input id="aireader-temperature" type="range" min="0" max="2" step="0.1" value="0.7"/>
-      <label id="aireader-temperature-value" value="0.7" style="width: 40px;"/>
+      <!-- 最大历史消息数 -->
+      <hbox align="center" style="gap: 12px;">
+        <label value="历史消息数:" style="width: 100px; font-size: 13px;"/>
+        <html:input id="aireader-maxHistory" type="number" min="1" max="50" value="10"
+                    style="width: 120px; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px;"/>
+        <label value="(1-50)" style="font-size: 12px; color: #666;"/>
+      </hbox>
+
+      <!-- 调试模式 -->
+      <checkbox id="aireader-debugMode" label="启用调试模式 (在控制台输出详细日志)"/>
+    </vbox>
+  </groupbox>
+
+  <!-- ============================================
+       关于和操作按钮
+       ============================================ -->
+  <groupbox>
+    <hbox align="center" style="gap: 16px;">
+      <vbox style="flex: 1;">
+        <label style="font-size: 14px; font-weight: 600;">ZoteroPatch AI Reader</label>
+        <label undefined</label>
+      </vbox>
+      <button id="aireader-resetDefaults" label="重置为默认值" style="padding: 8px 16px;"/>
     </hbox>
   </groupbox>
 
-  <groupbox>
-    <label><html:h2>功能设置</html:h2></label>
-
-    <checkbox id="aireader-enableTranslation" label="启用翻译功能" checked="true"/>
-    <checkbox id="aireader-enableSummary" label="启用摘要功能" checked="true"/>
-    <checkbox id="aireader-enableQA" label="启用问答功能" checked="true"/>
-
-    <hbox align="center">
-      <label value="默认语言:" style="width: 100px;"/>
-      <menulist id="aireader-defaultLanguage">
-        <menupopup>
-          <menuitem label="简体中文" value="zh-CN"/>
-          <menuitem label="繁体中文" value="zh-TW"/>
-          <menuitem label="English" value="en"/>
-          <menuitem label="日本語" value="ja"/>
-        </menupopup>
-      </menulist>
-    </hbox>
-  </groupbox>
+  <!-- ============================================
+       JavaScript 事件处理
+       ============================================ -->
+  <script type="application/javascript"><![CDATA[
+    (function() {
+      'use strict';
+      
+      const PREF_PREFIX = 'extensions.aireader.';
+      
+      // Default templates
+      const DEFAULT_TEMPLATES = [
+        {
+          id: 'default-translation',
+          name: '默认翻译',
+          type: 'translation',
+          content: '请将以下文本翻译成{{language}}，保持原文的格式和专业术语：\n\n{{text}}',
+          isDefault: true
+        },
+        {
+          id: 'default-summary',
+          name: '默认摘要',
+          type: 'summary',
+          content: '请为以下学术论文内容生成简洁的中文摘要，包含主要观点和结论：\n\n标题：{{title}}\n作者：{{author}}\n\n内容：\n{{text}}',
+          isDefault: true
+        },
+        {
+          id: 'default-keypoints',
+          name: '默认要点',
+          type: 'keyPoints',
+          content: '请提取以下文本的关键要点，以简洁的条目形式列出：\n\n{{text}}',
+          isDefault: true
+        },
+        {
+          id: 'default-qa',
+          name: '默认问答',
+          type: 'qa',
+          content: '基于以下上下文回答问题。如果上下文中没有相关信息，请明确说明。\n\n上下文：\n{{context}}\n\n问题：{{question}}',
+          isDefault: true
+        }
+      ];
+      
+      let templates = [];
+      let selectedTemplateId = null;
+      
+      // ========================================
+      // Utility functions
+      // ========================================
+      
+      function getPref(key, defaultValue) {
+        try {
+          const value = Zotero.Prefs.get(PREF_PREFIX + key, true);
+          return value !== undefined && value !== null ? value : defaultValue;
+        } catch (e) {
+          console.error('[AIReader Prefs] Error getting pref:', key, e);
+          return defaultValue;
+        }
+      }
+      
+      function setPref(key, value) {
+        try {
+          Zotero.Prefs.set(PREF_PREFIX + key, value, true);
+        } catch (e) {
+          console.error('[AIReader Prefs] Error setting pref:', key, e);
+        }
+      }
+      
+      function $(id) {
+        return document.getElementById(id);
+      }
+      
+      // ========================================
+      // Load settings
+      // ========================================
+      
+      function loadSettings() {
+        console.log('[AIReader Prefs] Loading settings...');
+        
+        // API settings
+        $('aireader-apiKey').value = getPref('apiKey', '');
+        $('aireader-apiEndpoint').value = getPref('apiEndpoint', 'https://api.openai.com/v1');
+        
+        const model = getPref('model', 'gpt-3.5-turbo');
+        $('aireader-model').value = model;
+        $('aireader-customModel').value = getPref('customModel', '');
+        updateCustomModelVisibility(model);
+        
+        const temp = getPref('temperature', 0.7);
+        $('aireader-temperature').value = temp;
+        $('aireader-temperature-value').value = temp.toFixed(1);
+        
+        // Feature toggles
+        $('aireader-enableTranslation').checked = getPref('enableTranslation', true);
+        $('aireader-enableSummary').checked = getPref('enableSummary', true);
+        $('aireader-enableQA').checked = getPref('enableQA', true);
+        $('aireader-enableStreaming').checked = getPref('enableStreaming', true);
+        $('aireader-autoSaveHistory').checked = getPref('autoSaveHistory', false);
+        $('aireader-defaultLanguage').value = getPref('defaultLanguage', 'zh-CN');
+        
+        // Advanced settings
+        $('aireader-maxTokens').value = getPref('maxTokens', 2000);
+        $('aireader-timeout').value = getPref('timeout', 30);
+        $('aireader-maxHistory').value = getPref('maxHistory', 10);
+        $('aireader-debugMode').checked = getPref('debugMode', false);
+        
+        // Load templates
+        loadTemplates();
+        
+        console.log('[AIReader Prefs] Settings loaded');
+      }
+      
+      // ========================================
+      // Save settings
+      // ========================================
+      
+      function saveSettings() {
+        console.log('[AIReader Prefs] Saving settings...');
+        
+        // API settings
+        setPref('apiKey', $('aireader-apiKey').value);
+        setPref('apiEndpoint', $('aireader-apiEndpoint').value);
+        
+        const model = $('aireader-model').value;
+        setPref('model', model);
+        if (model === 'custom') {
+          setPref('customModel', $('aireader-customModel').value);
+        }
+        
+        setPref('temperature', parseFloat($('aireader-temperature').value));
+        
+        // Feature toggles
+        setPref('enableTranslation', $('aireader-enableTranslation').checked);
+        setPref('enableSummary', $('aireader-enableSummary').checked);
+        setPref('enableQA', $('aireader-enableQA').checked);
+        setPref('enableStreaming', $('aireader-enableStreaming').checked);
+        setPref('autoSaveHistory', $('aireader-autoSaveHistory').checked);
+        setPref('defaultLanguage', $('aireader-defaultLanguage').value);
+        
+        // Advanced settings
+        setPref('maxTokens', parseInt($('aireader-maxTokens').value, 10));
+        setPref('timeout', parseInt($('aireader-timeout').value, 10));
+        setPref('maxHistory', parseInt($('aireader-maxHistory').value, 10));
+        setPref('debugMode', $('aireader-debugMode').checked);
+        
+        console.log('[AIReader Prefs] Settings saved');
+      }
+      
+      // ========================================
+      // Template management
+      // ========================================
+      
+      function loadTemplates() {
+        try {
+          const stored = getPref('templates', '');
+          if (stored && stored.trim()) {
+            templates = JSON.parse(stored);
+          } else {
+            templates = [...DEFAULT_TEMPLATES];
+            saveTemplates();
+          }
+        } catch (e) {
+          console.error('[AIReader Prefs] Error loading templates:', e);
+          templates = [...DEFAULT_TEMPLATES];
+        }
+        renderTemplateList();
+      }
+      
+      function saveTemplates() {
+        try {
+          setPref('templates', JSON.stringify(templates));
+        } catch (e) {
+          console.error('[AIReader Prefs] Error saving templates:', e);
+        }
+      }
+      
+      function renderTemplateList() {
+        const list = $('aireader-template-list');
+        list.innerHTML = '';
+        
+        templates.forEach(t => {
+          const item = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+          item.style.cssText = 'padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;';
+          item.dataset.id = t.id;
+          
+          if (t.id === selectedTemplateId) {
+            item.style.background = '#e6f0fa';
+          }
+          
+          const name = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
+          name.textContent = t.name;
+          name.style.fontSize = '13px';
+          
+          const type = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
+          type.textContent = getTypeLabel(t.type);
+          type.style.cssText = 'font-size: 11px; color: #666; background: #f0f0f0; padding: 2px 6px; border-radius: 4px;';
+          
+          item.appendChild(name);
+          item.appendChild(type);
+          
+          item.addEventListener('click', () => selectTemplate(t.id));
+          list.appendChild(item);
+        });
+      }
+      
+      function getTypeLabel(type) {
+        const labels = {
+          translation: '翻译',
+          summary: '摘要',
+          keyPoints: '要点',
+          qa: '问答',
+          custom: '自定义'
+        };
+        return labels[type] || type;
+      }
+      
+      function selectTemplate(id) {
+        selectedTemplateId = id;
+        const template = templates.find(t => t.id === id);
+        
+        if (template) {
+          $('aireader-templateName').value = template.name;
+          $('aireader-templateType').value = template.type;
+          $('aireader-templateContent').value = template.content;
+          
+          // Disable editing for default templates (except content)
+          $('aireader-templateName').disabled = template.isDefault;
+          $('aireader-templateType').disabled = template.isDefault;
+        }
+        
+        renderTemplateList();
+      }
+      
+      function addTemplate() {
+        const newTemplate = {
+          id: 'custom-' + Date.now(),
+          name: '新模板',
+          type: 'custom',
+          content: '',
+          isDefault: false
+        };
+        templates.push(newTemplate);
+        saveTemplates();
+        renderTemplateList();
+        selectTemplate(newTemplate.id);
+      }
+      
+      function deleteTemplate() {
+        if (!selectedTemplateId) return;
+        
+        const template = templates.find(t => t.id === selectedTemplateId);
+        if (template && template.isDefault) {
+          alert('默认模板不能删除，只能重置为初始内容');
+          return;
+        }
+        
+        if (confirm('确定要删除这个模板吗？')) {
+          templates = templates.filter(t => t.id !== selectedTemplateId);
+          saveTemplates();
+          selectedTemplateId = null;
+          $('aireader-templateName').value = '';
+          $('aireader-templateType').value = 'custom';
+          $('aireader-templateContent').value = '';
+          renderTemplateList();
+        }
+      }
+      
+      function updateSelectedTemplate() {
+        if (!selectedTemplateId) return;
+        
+        const template = templates.find(t => t.id === selectedTemplateId);
+        if (template) {
+          if (!template.isDefault) {
+            template.name = $('aireader-templateName').value;
+            template.type = $('aireader-templateType').value;
+          }
+          template.content = $('aireader-templateContent').value;
+          saveTemplates();
+          renderTemplateList();
+        }
+      }
+      
+      // ========================================
+      // UI interactions
+      // ========================================
+      
+      function updateCustomModelVisibility(model) {
+        const row = $('aireader-customModel-row');
+        row.style.display = model === 'custom' ? 'flex' : 'none';
+      }
+      
+      function toggleAdvancedSection() {
+        const content = $('aireader-advanced-content');
+        const icon = $('aireader-advanced-icon');
+        const isHidden = content.style.display === 'none';
+        
+        content.style.display = isHidden ? 'flex' : 'none';
+        icon.value = isHidden ? '▲' : '▼';
+      }
+      
+      async function testConnection() {
+        const resultLabel = $('aireader-testResult');
+        const testBtn = $('aireader-testConnection');
+        
+        const apiKey = $('aireader-apiKey').value;
+        const apiEndpoint = $('aireader-apiEndpoint').value;
+        let model = $('aireader-model').value;
+        
+        if (model === 'custom') {
+          model = $('aireader-customModel').value;
+        }
+        
+        if (!apiKey || !apiEndpoint) {
+          resultLabel.value = '请先填写 API Key 和端点';
+          resultLabel.style.color = '#dc3545';
+          return;
+        }
+        
+        testBtn.disabled = true;
+        testBtn.label = '测试中...';
+        resultLabel.value = '';
+        
+        try {
+          const response = await fetch(apiEndpoint + '/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + apiKey
+            },
+            body: JSON.stringify({
+              model: model,
+              messages: [{ role: 'user', content: 'Hi' }],
+              max_tokens: 5
+            })
+          });
+          
+          if (response.ok) {
+            resultLabel.value = '✓ 连接成功';
+            resultLabel.style.color = '#28a745';
+          } else {
+            const error = await response.json().catch(() => ({}));
+            resultLabel.value = '✗ ' + (error.error?.message || '连接失败: ' + response.status);
+            resultLabel.style.color = '#dc3545';
+          }
+        } catch (e) {
+          resultLabel.value = '✗ 网络错误: ' + e.message;
+          resultLabel.style.color = '#dc3545';
+        } finally {
+          testBtn.disabled = false;
+          testBtn.label = '测试连接';
+        }
+      }
+      
+      function resetToDefaults() {
+        if (!confirm('确定要重置所有设置为默认值吗？这将清空 API Key 并重置所有模板。')) {
+          return;
+        }
+        
+        // Clear API settings
+        $('aireader-apiKey').value = '';
+        $('aireader-apiEndpoint').value = 'https://api.openai.com/v1';
+        $('aireader-model').value = 'gpt-3.5-turbo';
+        $('aireader-customModel').value = '';
+        updateCustomModelVisibility('gpt-3.5-turbo');
+        $('aireader-temperature').value = 0.7;
+        $('aireader-temperature-value').value = '0.7';
+        
+        // Reset feature toggles
+        $('aireader-enableTranslation').checked = true;
+        $('aireader-enableSummary').checked = true;
+        $('aireader-enableQA').checked = true;
+        $('aireader-enableStreaming').checked = true;
+        $('aireader-autoSaveHistory').checked = false;
+        $('aireader-defaultLanguage').value = 'zh-CN';
+        
+        // Reset advanced settings
+        $('aireader-maxTokens').value = 2000;
+        $('aireader-timeout').value = 30;
+        $('aireader-maxHistory').value = 10;
+        $('aireader-debugMode').checked = false;
+        
+        // Reset templates
+        templates = [...DEFAULT_TEMPLATES];
+        saveTemplates();
+        selectedTemplateId = null;
+        $('aireader-templateName').value = '';
+        $('aireader-templateType').value = 'custom';
+        $('aireader-templateContent').value = '';
+        renderTemplateList();
+        
+        saveSettings();
+        alert('设置已重置为默认值');
+      }
+      
+      function insertPlaceholder(placeholder) {
+        const textarea = $('aireader-templateContent');
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        
+        textarea.value = text.substring(0, start) + placeholder + text.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + placeholder.length;
+        textarea.focus();
+        
+        updateSelectedTemplate();
+      }
+      
+      // ========================================
+      // Event listeners
+      // ========================================
+      
+      function initEventListeners() {
+        // Temperature slider
+        $('aireader-temperature').addEventListener('input', function() {
+          $('aireader-temperature-value').value = parseFloat(this.value).toFixed(1);
+          saveSettings();
+        });
+        
+        // Model selection
+        $('aireader-model').addEventListener('command', function() {
+          updateCustomModelVisibility(this.value);
+          saveSettings();
+        });
+        
+        // All input changes trigger save
+        const inputs = [
+          'aireader-apiKey', 'aireader-apiEndpoint', 'aireader-customModel',
+          'aireader-maxTokens', 'aireader-timeout', 'aireader-maxHistory'
+        ];
+        inputs.forEach(id => {
+          $(id).addEventListener('change', saveSettings);
+        });
+        
+        // Checkboxes
+        const checkboxes = [
+          'aireader-enableTranslation', 'aireader-enableSummary', 'aireader-enableQA',
+          'aireader-enableStreaming', 'aireader-autoSaveHistory', 'aireader-debugMode'
+        ];
+        checkboxes.forEach(id => {
+          $(id).addEventListener('command', saveSettings);
+        });
+        
+        // Menus
+        $('aireader-defaultLanguage').addEventListener('command', saveSettings);
+        
+        // Advanced section toggle
+        $('aireader-advanced-header').addEventListener('click', toggleAdvancedSection);
+        
+        // Test connection
+        $('aireader-testConnection').addEventListener('command', testConnection);
+        
+        // Reset defaults
+        $('aireader-resetDefaults').addEventListener('command', resetToDefaults);
+        
+        // Template management
+        $('aireader-addTemplate').addEventListener('command', addTemplate);
+        $('aireader-deleteTemplate').addEventListener('command', deleteTemplate);
+        
+        $('aireader-templateName').addEventListener('change', updateSelectedTemplate);
+        $('aireader-templateType').addEventListener('command', updateSelectedTemplate);
+        $('aireader-templateContent').addEventListener('change', updateSelectedTemplate);
+        
+        // Placeholder clicks
+        document.querySelectorAll('.placeholder-var').forEach(el => {
+          el.addEventListener('click', function() {
+            insertPlaceholder(this.textContent);
+          });
+        });
+      }
+      
+      // ========================================
+      // Initialize
+      // ========================================
+      
+      window.addEventListener('load', function() {
+        console.log('[AIReader Prefs] Initializing...');
+        loadSettings();
+        initEventListeners();
+        console.log('[AIReader Prefs] Initialization complete');
+      });
+      
+    })();
+  ]]></script>
 
 </vbox>

@@ -1,0 +1,460 @@
+/**
+ * Theme System for ZoteroPatch AI Reader
+ * Supports light and dark themes with CSS variables
+ */
+
+/* ============================================
+   Light Theme (Default)
+   ============================================ */
+:root {
+  /* Background colors */
+  --ai-bg-primary: #ffffff;
+  --ai-bg-secondary: #f5f5f5;
+  --ai-bg-tertiary: #ebebeb;
+  
+  /* Text colors */
+  --ai-text-primary: #333333;
+  --ai-text-secondary: #666666;
+  --ai-text-muted: #999999;
+  
+  /* Border colors */
+  --ai-border-color: #e0e0e0;
+  --ai-border-color-light: #f0f0f0;
+  
+  /* Accent colors */
+  --ai-accent-color: #0066cc;
+  --ai-accent-color-hover: #0052a3;
+  --ai-accent-color-light: #e6f0fa;
+  
+  /* Status colors */
+  --ai-success-color: #28a745;
+  --ai-error-color: #dc3545;
+  --ai-warning-color: #ffc107;
+  
+  /* Chat bubble colors */
+  --ai-user-bubble-bg: #0066cc;
+  --ai-user-bubble-text: #ffffff;
+  --ai-assistant-bubble-bg: #f0f0f0;
+  --ai-assistant-bubble-text: #333333;
+  
+  /* Input colors */
+  --ai-input-bg: #ffffff;
+  --ai-input-border: #cccccc;
+  --ai-input-focus-border: #0066cc;
+  --ai-input-placeholder: #999999;
+  
+  /* Button colors */
+  --ai-button-primary-bg: #0066cc;
+  --ai-button-primary-text: #ffffff;
+  --ai-button-secondary-bg: #f5f5f5;
+  --ai-button-secondary-text: #333333;
+  --ai-button-secondary-border: #cccccc;
+  
+  /* Code block colors */
+  --ai-code-bg: #f6f8fa;
+  --ai-code-text: #24292e;
+  --ai-code-border: #e1e4e8;
+  
+  /* Scrollbar colors */
+  --ai-scrollbar-track: #f5f5f5;
+  --ai-scrollbar-thumb: #cccccc;
+  --ai-scrollbar-thumb-hover: #999999;
+  
+  /* Shadow */
+  --ai-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --ai-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  
+  /* Spacing */
+  --ai-spacing-xs: 4px;
+  --ai-spacing-sm: 8px;
+  --ai-spacing-md: 12px;
+  --ai-spacing-lg: 16px;
+  --ai-spacing-xl: 24px;
+  
+  /* Border radius */
+  --ai-radius-sm: 4px;
+  --ai-radius-md: 6px;
+  --ai-radius-lg: 8px;
+  --ai-radius-xl: 12px;
+  
+  /* Font */
+  --ai-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --ai-font-mono: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace;
+  --ai-font-size-xs: 11px;
+  --ai-font-size-sm: 12px;
+  --ai-font-size-md: 13px;
+  --ai-font-size-lg: 14px;
+  --ai-font-size-xl: 16px;
+  
+  /* Transitions */
+  --ai-transition-fast: 0.1s ease;
+  --ai-transition-normal: 0.2s ease;
+  --ai-transition-slow: 0.3s ease;
+}
+
+/* ============================================
+   Dark Theme
+   ============================================ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Background colors */
+    --ai-bg-primary: #1e1e1e;
+    --ai-bg-secondary: #2d2d2d;
+    --ai-bg-tertiary: #3d3d3d;
+    
+    /* Text colors */
+    --ai-text-primary: #e0e0e0;
+    --ai-text-secondary: #a0a0a0;
+    --ai-text-muted: #707070;
+    
+    /* Border colors */
+    --ai-border-color: #444444;
+    --ai-border-color-light: #383838;
+    
+    /* Accent colors */
+    --ai-accent-color: #4da6ff;
+    --ai-accent-color-hover: #66b3ff;
+    --ai-accent-color-light: #1a3a5c;
+    
+    /* Status colors */
+    --ai-success-color: #3fb950;
+    --ai-error-color: #f85149;
+    --ai-warning-color: #d29922;
+    
+    /* Chat bubble colors */
+    --ai-user-bubble-bg: #0066cc;
+    --ai-user-bubble-text: #ffffff;
+    --ai-assistant-bubble-bg: #3d3d3d;
+    --ai-assistant-bubble-text: #e0e0e0;
+    
+    /* Input colors */
+    --ai-input-bg: #2d2d2d;
+    --ai-input-border: #444444;
+    --ai-input-focus-border: #4da6ff;
+    --ai-input-placeholder: #707070;
+    
+    /* Button colors */
+    --ai-button-primary-bg: #0066cc;
+    --ai-button-primary-text: #ffffff;
+    --ai-button-secondary-bg: #3d3d3d;
+    --ai-button-secondary-text: #e0e0e0;
+    --ai-button-secondary-border: #555555;
+    
+    /* Code block colors */
+    --ai-code-bg: #2d2d2d;
+    --ai-code-text: #e0e0e0;
+    --ai-code-border: #444444;
+    
+    /* Scrollbar colors */
+    --ai-scrollbar-track: #2d2d2d;
+    --ai-scrollbar-thumb: #555555;
+    --ai-scrollbar-thumb-hover: #666666;
+    
+    /* Shadow */
+    --ai-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --ai-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* ============================================
+   Common Styles
+   ============================================ */
+
+/* Scrollbar styling */
+.ai-reader-panel ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.ai-reader-panel ::-webkit-scrollbar-track {
+  background: var(--ai-scrollbar-track);
+  border-radius: var(--ai-radius-sm);
+}
+
+.ai-reader-panel ::-webkit-scrollbar-thumb {
+  background: var(--ai-scrollbar-thumb);
+  border-radius: var(--ai-radius-sm);
+}
+
+.ai-reader-panel ::-webkit-scrollbar-thumb:hover {
+  background: var(--ai-scrollbar-thumb-hover);
+}
+
+/* Focus styles for accessibility */
+.ai-reader-panel *:focus-visible {
+  outline: 2px solid var(--ai-accent-color);
+  outline-offset: 2px;
+}
+
+/* Button base styles */
+.ai-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ai-spacing-sm) var(--ai-spacing-md);
+  font-size: var(--ai-font-size-md);
+  font-family: var(--ai-font-family);
+  border-radius: var(--ai-radius-md);
+  cursor: pointer;
+  transition: all var(--ai-transition-fast);
+  border: 1px solid transparent;
+}
+
+.ai-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-btn-primary {
+  background: var(--ai-button-primary-bg);
+  color: var(--ai-button-primary-text);
+  border-color: var(--ai-button-primary-bg);
+}
+
+.ai-btn-primary:hover:not(:disabled) {
+  background: var(--ai-accent-color-hover);
+  border-color: var(--ai-accent-color-hover);
+}
+
+.ai-btn-secondary {
+  background: var(--ai-button-secondary-bg);
+  color: var(--ai-button-secondary-text);
+  border-color: var(--ai-button-secondary-border);
+}
+
+.ai-btn-secondary:hover:not(:disabled) {
+  background: var(--ai-bg-tertiary);
+}
+
+/* Input base styles */
+.ai-input {
+  padding: var(--ai-spacing-sm) var(--ai-spacing-md);
+  font-size: var(--ai-font-size-md);
+  font-family: var(--ai-font-family);
+  background: var(--ai-input-bg);
+  color: var(--ai-text-primary);
+  border: 1px solid var(--ai-input-border);
+  border-radius: var(--ai-radius-md);
+  transition: border-color var(--ai-transition-fast);
+}
+
+.ai-input:focus {
+  border-color: var(--ai-input-focus-border);
+  outline: none;
+}
+
+.ai-input::placeholder {
+  color: var(--ai-input-placeholder);
+}
+
+/* Textarea styles */
+.ai-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Select/menulist styles */
+.ai-select {
+  padding: var(--ai-spacing-sm) var(--ai-spacing-md);
+  font-size: var(--ai-font-size-md);
+  background: var(--ai-input-bg);
+  color: var(--ai-text-primary);
+  border: 1px solid var(--ai-input-border);
+  border-radius: var(--ai-radius-md);
+}
+
+/* Groupbox styles for preferences */
+.ai-groupbox {
+  margin-bottom: var(--ai-spacing-lg);
+  padding: var(--ai-spacing-lg);
+  background: var(--ai-bg-secondary);
+  border: 1px solid var(--ai-border-color);
+  border-radius: var(--ai-radius-lg);
+}
+
+.ai-groupbox-title {
+  margin: 0 0 var(--ai-spacing-md) 0;
+  font-size: var(--ai-font-size-lg);
+  font-weight: 600;
+  color: var(--ai-text-primary);
+}
+
+/* Collapsible section */
+.ai-collapsible {
+  border: 1px solid var(--ai-border-color);
+  border-radius: var(--ai-radius-lg);
+  overflow: hidden;
+}
+
+.ai-collapsible-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ai-spacing-md) var(--ai-spacing-lg);
+  background: var(--ai-bg-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.ai-collapsible-header:hover {
+  background: var(--ai-bg-tertiary);
+}
+
+.ai-collapsible-icon {
+  transition: transform var(--ai-transition-normal);
+}
+
+.ai-collapsible.expanded .ai-collapsible-icon {
+  transform: rotate(180deg);
+}
+
+.ai-collapsible-content {
+  display: none;
+  padding: var(--ai-spacing-lg);
+  background: var(--ai-bg-primary);
+  border-top: 1px solid var(--ai-border-color);
+}
+
+.ai-collapsible.expanded .ai-collapsible-content {
+  display: block;
+}
+
+/* Form row styles */
+.ai-form-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--ai-spacing-md);
+  gap: var(--ai-spacing-md);
+}
+
+.ai-form-label {
+  min-width: 100px;
+  font-size: var(--ai-font-size-md);
+  color: var(--ai-text-primary);
+}
+
+.ai-form-input {
+  flex: 1;
+}
+
+/* Checkbox styles */
+.ai-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ai-spacing-sm);
+  margin-bottom: var(--ai-spacing-sm);
+}
+
+/* Slider styles */
+.ai-slider {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  background: var(--ai-bg-tertiary);
+  border-radius: 2px;
+  outline: none;
+}
+
+.ai-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--ai-accent-color);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.ai-slider-value {
+  min-width: 40px;
+  text-align: center;
+  font-size: var(--ai-font-size-sm);
+  color: var(--ai-text-secondary);
+}
+
+/* Template editor styles */
+.ai-template-list {
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid var(--ai-border-color);
+  border-radius: var(--ai-radius-md);
+  margin-bottom: var(--ai-spacing-md);
+}
+
+.ai-template-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ai-spacing-sm) var(--ai-spacing-md);
+  cursor: pointer;
+  border-bottom: 1px solid var(--ai-border-color-light);
+}
+
+.ai-template-item:last-child {
+  border-bottom: none;
+}
+
+.ai-template-item:hover {
+  background: var(--ai-bg-tertiary);
+}
+
+.ai-template-item.selected {
+  background: var(--ai-accent-color-light);
+}
+
+.ai-template-item-name {
+  font-size: var(--ai-font-size-md);
+  color: var(--ai-text-primary);
+}
+
+.ai-template-item-type {
+  font-size: var(--ai-font-size-xs);
+  color: var(--ai-text-muted);
+  background: var(--ai-bg-tertiary);
+  padding: 2px 6px;
+  border-radius: var(--ai-radius-sm);
+}
+
+/* Placeholder help */
+.ai-placeholder-help {
+  margin-top: var(--ai-spacing-md);
+  padding: var(--ai-spacing-md);
+  background: var(--ai-bg-tertiary);
+  border-radius: var(--ai-radius-md);
+  font-size: var(--ai-font-size-sm);
+}
+
+.ai-placeholder-help-title {
+  font-weight: 600;
+  margin-bottom: var(--ai-spacing-sm);
+  color: var(--ai-text-primary);
+}
+
+.ai-placeholder-item {
+  display: flex;
+  gap: var(--ai-spacing-sm);
+  margin-bottom: var(--ai-spacing-xs);
+  color: var(--ai-text-secondary);
+}
+
+.ai-placeholder-code {
+  font-family: var(--ai-font-mono);
+  color: var(--ai-accent-color);
+  cursor: pointer;
+}
+
+.ai-placeholder-code:hover {
+  text-decoration: underline;
+}
+
+/* Status message styles */
+.ai-status-success {
+  color: var(--ai-success-color);
+}
+
+.ai-status-error {
+  color: var(--ai-error-color);
+}
+
+.ai-status-warning {
+  color: var(--ai-warning-color);
+}
