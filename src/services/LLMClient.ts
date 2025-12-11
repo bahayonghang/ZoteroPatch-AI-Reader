@@ -3,7 +3,7 @@
  * Handles communication with OpenAI-compatible LLM endpoints
  */
 
-import type { ChatMessage } from '../types';
+import type { ChatMessage, StreamCallbacks } from '../types';
 
 export interface LLMClientOptions {
   apiKey: string;
@@ -12,6 +12,7 @@ export interface LLMClientOptions {
   temperature?: number;
   maxTokens?: number;
   timeout?: number;
+  enableStreaming?: boolean;
 }
 
 export interface LLMResponse {
@@ -34,12 +35,14 @@ export class LLMClient {
   private options: LLMClientOptions;
   private readonly MAX_RETRIES = 3;
   private readonly RETRY_DELAY_MS = 1000;
+  private abortController: AbortController | null = null;
 
   constructor(options: LLMClientOptions) {
     this.options = {
       temperature: 0.7,
       maxTokens: 2000,
       timeout: 30000,
+      enableStreaming: true,
       ...options,
     };
 
@@ -333,5 +336,197 @@ export class LLMClient {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { apiKey: _apiKey, ...safeOptions } = this.options;
     return safeOptions;
+  }
+
+  // ========================================
+  // Streaming Support
+  // ========================================
+
+  /**
+   * Send chat completion request with streaming
+   */
+  async streamChat(messages: ChatMessage[], callbacks: StreamCallbacks): Promise<void> {
+    console.log(`[LLMClient] Starting stream chat with ${messages.length} messages`);
+
+    const url = `${this.options.apiEndpoint}/chat/completions`;
+    const requestBody = {
+      model: this.options.model,
+      messages: messages.map(m => ({
+        role: m.role,
+        content: m.content,
+      })),
+      temperature: this.options.temperature,
+      max_tokens: this.options.maxTokens,
+      stream: true,
+    };
+
+    this.abortController = new AbortController();
+    callbacks.onStart?.();
+
+    try {
+      await this.fetchWithZoteroStreamSimple(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.options.apiKey}`,
+        },
+        body: JSON.stringify(requestBody),
+        onChunk: (chunk: string) => {
+          callbacks.onChunk?.(chunk);
+        },
+        onComplete: (fullText: string) => {
+          callbacks.onComplete?.(fullText);
+        },
+        onError: (error: Error) => {
+          callbacks.onError?.(error);
+        },
+        signal: this.abortController.signal,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('[LLMClient] Stream aborted by user');
+        return;
+      }
+      console.error('[LLMClient] Stream error:', error);
+      callbacks.onError?.(error instanceof Error ? error : new Error(String(error)));
+      throw error;
+    } finally {
+      this.abortController = null;
+    }
+  }
+
+  /**
+   * Abort ongoing stream request
+   */
+  abortStream(): void {
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+      console.log('[LLMClient] Stream aborted');
+    }
+  }
+
+  /**
+   * Check if streaming is in progress
+   */
+  isStreaming(): boolean {
+    return this.abortController !== null;
+  }
+
+  /**
+   * Fetch with streaming support using XMLHttpRequest for Zotero (simplified)
+   */
+  private async fetchWithZoteroStreamSimple(
+    url: string,
+    options: {
+      method: string;
+      headers: Record<string, string>;
+      body: string;
+      onChunk: (chunk: string) => void;
+      onComplete: (fullText: string) => void;
+      onError: (error: Error) => void;
+      signal?: AbortSignal;
+    }
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const xhr = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"]
+        .createInstance(Components.interfaces.nsIXMLHttpRequest);
+
+      xhr.open(options.method, url, true);
+
+      // Set headers
+      Object.entries(options.headers).forEach(([key, value]) => {
+        xhr.setRequestHeader(key, value);
+      });
+
+      // Handle abort
+      if (options.signal) {
+        options.signal.addEventListener('abort', () => {
+          xhr.abort();
+          reject(new DOMException('Aborted', 'AbortError'));
+        });
+      }
+
+      let lastProcessedLength = 0;
+      let fullText = '';
+
+      xhr.onprogress = () => {
+        const newData = xhr.responseText.slice(lastProcessedLength);
+        lastProcessedLength = xhr.responseText.length;
+
+        if (newData) {
+          // Parse SSE chunks
+          const lines = newData.split('\n');
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6).trim();
+              if (data === '[DONE]') {
+                continue;
+              }
+
+              try {
+                const json = JSON.parse(data);
+                const content = json.choices?.[0]?.delta?.content;
+                if (content) {
+                  fullText += content;
+                  options.onChunk(content);
+                }
+              } catch {
+                // Skip invalid JSON lines
+              }
+            }
+          }
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          options.onComplete(fullText);
+          resolve();
+        } else {
+          const error = new Error(`HTTP ${xhr.status}: ${xhr.statusText}`);
+          options.onError(error);
+          reject(error);
+        }
+      };
+
+      xhr.onerror = () => {
+        const error = new Error('Network error');
+        options.onError(error);
+        reject(error);
+      };
+
+      xhr.ontimeout = () => {
+        const error = new Error('Request timeout');
+        options.onError(error);
+        reject(error);
+      };
+
+      xhr.send(options.body);
+    });
+  }
+
+  /**
+   * Chat with automatic streaming or non-streaming based on options
+   */
+  async chatAuto(
+    messages: ChatMessage[],
+    callbacks?: StreamCallbacks
+  ): Promise<LLMResponse> {
+    if (this.options.enableStreaming && callbacks) {
+      let fullContent = '';
+      await this.streamChat(messages, {
+        onStart: callbacks.onStart,
+        onChunk: (chunk) => {
+          fullContent += chunk;
+          callbacks.onChunk?.(chunk);
+        },
+        onComplete: callbacks.onComplete,
+        onError: callbacks.onError,
+      });
+      return { content: fullContent };
+    } else {
+      return this.chat(messages);
+    }
   }
 }

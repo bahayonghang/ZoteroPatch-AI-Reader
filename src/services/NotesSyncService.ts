@@ -3,7 +3,7 @@
  * Handles writing AI-generated content back to Zotero notes
  */
 
-import type { ZoteroNoteItem } from '../types';
+import type { ZoteroNoteItem, ChatMessage, ChatHistorySaveOptions } from '../types';
 
 export enum NoteSyncMode {
   APPEND = 'append',
@@ -18,9 +18,27 @@ export interface NoteSyncOptions {
 
 export class NotesSyncService {
   private readonly NOTE_SOURCE_TAG = '[AI Reader Assistant]';
+  private readonly CHAT_HISTORY_TAG = '<!-- AI-CHAT-HISTORY -->';
 
   constructor() {
     console.log('[NotesSyncService] Initialized');
+    this.setupEventListeners();
+  }
+
+  /**
+   * Setup event listeners for save requests from panel
+   */
+  private setupEventListeners(): void {
+    document.addEventListener('ai-reader-save-chat', async (event: Event) => {
+      const customEvent = event as CustomEvent<{ itemID: number; messages: ChatMessage[] }>;
+      const { itemID, messages } = customEvent.detail;
+      try {
+        await this.saveChatHistory({ itemID, messages });
+        console.log('[NotesSyncService] Chat history saved via event');
+      } catch (error) {
+        console.error('[NotesSyncService] Failed to save chat history:', error);
+      }
+    });
   }
 
   /**
@@ -274,6 +292,191 @@ export class NotesSyncService {
     } catch (error) {
       console.error('[NotesSyncService] Error getting AI Reader note:', error);
       return null;
+    }
+  }
+
+  // ========================================
+  // Chat History
+  // ========================================
+
+  /**
+   * Save chat history to Zotero note
+   */
+  async saveChatHistory(options: ChatHistorySaveOptions): Promise<void> {
+    const { itemID, messages, format = 'markdown', includeTimestamps = true } = options;
+
+    if (!messages || messages.length === 0) {
+      console.log('[NotesSyncService] No messages to save');
+      return;
+    }
+
+    try {
+      console.log(`[NotesSyncService] Saving chat history for item ${itemID}`);
+
+      // Get or create chat history note
+      const note = await this.getOrCreateChatHistoryNote(itemID);
+
+      // Format messages
+      const formattedContent = this.formatChatHistory(messages, format, includeTimestamps);
+
+      // Update note
+      const headerContent = `${this.CHAT_HISTORY_TAG}\n<h2>💬 AI 对话历史</h2>\n`;
+      const timestamp = new Date().toLocaleString('zh-CN');
+      const fullContent = headerContent + 
+        `<p><em>保存时间: ${timestamp}</em></p>\n` +
+        formattedContent;
+
+      note.setNote(fullContent);
+      await note.saveTx();
+
+      console.log(`[NotesSyncService] Chat history saved to note ${note.id}`);
+    } catch (error) {
+      console.error('[NotesSyncService] Failed to save chat history:', error);
+      throw new Error(`Failed to save chat history: ${error}`);
+    }
+  }
+
+  /**
+   * Get or create chat history note
+   */
+  private async getOrCreateChatHistoryNote(itemID: number): Promise<ZoteroNoteItem> {
+    if (!Zotero.Items) {
+      throw new Error('Zotero.Items is not available');
+    }
+
+    const item = await Zotero.Items.getAsync(itemID);
+    if (!item) {
+      throw new Error(`Item ${itemID} not found`);
+    }
+
+    // Get child notes
+    const notes = item.getNotes?.() || [];
+
+    // Look for chat history note
+    for (const noteID of notes) {
+      const note = await Zotero.Items.getAsync(noteID);
+      if (note && typeof (note as unknown as ZoteroNoteItem).getNote === 'function') {
+        const noteItem = note as unknown as ZoteroNoteItem;
+        const noteContent = noteItem.getNote();
+
+        if (noteContent.includes(this.CHAT_HISTORY_TAG)) {
+          return noteItem;
+        }
+      }
+    }
+
+    // Create new chat history note
+    console.log('[NotesSyncService] Creating new chat history note');
+    if (!Zotero.Item) {
+      throw new Error('Zotero.Item constructor is not available');
+    }
+    const newNote = new Zotero.Item('note') as ZoteroNoteItem;
+    newNote.parentID = itemID;
+    newNote.setNote(`${this.CHAT_HISTORY_TAG}\n<h2>💬 AI 对话历史</h2>\n`);
+    await newNote.saveTx();
+
+    return newNote;
+  }
+
+  /**
+   * Format chat history to HTML
+   */
+  private formatChatHistory(
+    messages: ChatMessage[],
+    format: 'markdown' | 'html' | 'plain',
+    includeTimestamps: boolean
+  ): string {
+    let html = '<div class="ai-chat-history">\n';
+
+    for (const message of messages) {
+      const roleLabel = message.role === 'user' ? '👤 用户' : '🤖 AI';
+      const roleClass = message.role === 'user' ? 'user-message' : 'assistant-message';
+      const timestamp = includeTimestamps
+        ? `<span class="timestamp">(${new Date(message.timestamp).toLocaleTimeString('zh-CN')})</span>`
+        : '';
+
+      html += `<div class="${roleClass}">\n`;
+      html += `  <p><strong>${roleLabel}</strong> ${timestamp}</p>\n`;
+
+      if (format === 'markdown') {
+        // Convert Markdown to HTML (basic conversion)
+        const htmlContent = this.markdownToHtml(message.content);
+        html += `  <div class="message-content">${htmlContent}</div>\n`;
+      } else if (format === 'html') {
+        html += `  <div class="message-content">${message.content}</div>\n`;
+      } else {
+        html += `  <p>${message.content.replace(/\n/g, '<br/>')}</p>\n`;
+      }
+
+      html += '</div>\n';
+    }
+
+    html += '</div>\n<hr/>\n';
+    return html;
+  }
+
+  /**
+   * Basic Markdown to HTML conversion
+   */
+  private markdownToHtml(markdown: string): string {
+    let html = markdown;
+
+    // Escape HTML
+    html = html.replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    // Code blocks
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>');
+
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // Bold
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+    // Italic
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+    // Lists
+    html = html.replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>');
+
+    // Line breaks
+    html = html.replace(/\n/g, '<br/>');
+
+    return html;
+  }
+
+  /**
+   * Load chat history from note
+   */
+  async loadChatHistory(itemID: number): Promise<ChatMessage[]> {
+    try {
+      if (!Zotero.Items) return [];
+
+      const item = await Zotero.Items.getAsync(itemID);
+      if (!item) return [];
+
+      const notes = item.getNotes?.() || [];
+
+      for (const noteID of notes) {
+        const note = await Zotero.Items.getAsync(noteID);
+        if (note && typeof (note as unknown as ZoteroNoteItem).getNote === 'function') {
+          const noteItem = note as unknown as ZoteroNoteItem;
+          const noteContent = noteItem.getNote();
+
+          if (noteContent.includes(this.CHAT_HISTORY_TAG)) {
+            console.log('[NotesSyncService] Found chat history note');
+            // Note: Full parsing would require more complex logic
+            return [];
+          }
+        }
+      }
+
+      return [];
+    } catch (error) {
+      console.error('[NotesSyncService] Error loading chat history:', error);
+      return [];
     }
   }
 }

@@ -3,7 +3,7 @@
  * Manages plugin preferences stored in Zotero's preference system
  */
 
-import type { PluginConfig, PromptTemplates } from '../types';
+import type { PluginConfig, PromptTemplates, PromptTemplate, TemplatePlaceholders } from '../types';
 
 export class ConfigManager {
   private readonly PREF_PREFIX = 'extensions.aireader.';
@@ -15,6 +15,45 @@ export class ConfigManager {
     keyPoints: `请提取以下文本的关键要点：\n\n{{text}}`,
     qa: `基于以下上下文回答问题：\n\n上下文：{{context}}\n\n问题：{{question}}`
   };
+
+  private readonly DEFAULT_PROMPT_TEMPLATES: PromptTemplate[] = [
+    {
+      id: 'default-translation',
+      name: '默认翻译',
+      type: 'translation',
+      content: '请将以下文本翻译成{{language}}，保持原文的格式和专业术语：\n\n{{text}}',
+      isDefault: true,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    },
+    {
+      id: 'default-summary',
+      name: '默认摘要',
+      type: 'summary',
+      content: '请为以下学术论文内容生成简洁的中文摘要，包含主要观点和结论：\n\n标题：{{title}}\n作者：{{author}}\n\n内容：\n{{text}}',
+      isDefault: true,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    },
+    {
+      id: 'default-keypoints',
+      name: '默认要点',
+      type: 'keyPoints',
+      content: '请提取以下文本的关键要点，以简洁的条目形式列出：\n\n{{text}}',
+      isDefault: true,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    },
+    {
+      id: 'default-qa',
+      name: '默认问答',
+      type: 'qa',
+      content: '基于以下上下文回答问题。如果上下文中没有相关信息，请明确说明。\n\n上下文：\n{{context}}\n\n问题：{{question}}',
+      isDefault: true,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    }
+  ];
 
   constructor() {
     console.log('[ConfigManager] Initialized');
@@ -29,12 +68,20 @@ export class ConfigManager {
         apiKey: this.getPref('apiKey', ''),
         apiEndpoint: this.getPref('apiEndpoint', 'https://api.openai.com/v1'),
         model: this.getPref('model', 'gpt-3.5-turbo'),
+        customModel: this.getPref('customModel', ''),
         temperature: this.getPref('temperature', 0.7),
         defaultLanguage: this.getPref('defaultLanguage', 'zh-CN'),
         enableTranslation: this.getPref('enableTranslation', true),
         enableSummary: this.getPref('enableSummary', true),
         enableQA: this.getPref('enableQA', true),
+        enableStreaming: this.getPref('enableStreaming', true),
+        autoSaveHistory: this.getPref('autoSaveHistory', false),
+        maxTokens: this.getPref('maxTokens', 2000),
+        timeout: this.getPref('timeout', 30),
+        maxHistory: this.getPref('maxHistory', 10),
+        debugMode: this.getPref('debugMode', false),
         templates: this.loadTemplates(),
+        promptTemplates: this.loadPromptTemplates(),
       };
 
       console.log('[ConfigManager] Configuration loaded');
@@ -43,6 +90,19 @@ export class ConfigManager {
       console.error('[ConfigManager] Failed to load configuration:', error);
       throw error;
     }
+  }
+
+  /**
+   * Get the actual model name (handles custom model)
+   */
+  getActualModel(): string {
+    if (!this.config) {
+      throw new Error('Configuration not loaded. Call load() first.');
+    }
+    if (this.config.model === 'custom' && this.config.customModel) {
+      return this.config.customModel;
+    }
+    return this.config.model;
   }
 
   /**
@@ -206,12 +266,20 @@ export class ConfigManager {
       apiKey: '',
       apiEndpoint: 'https://api.openai.com/v1',
       model: 'gpt-3.5-turbo',
+      customModel: '',
       temperature: 0.7,
       defaultLanguage: 'zh-CN',
       enableTranslation: true,
       enableSummary: true,
       enableQA: true,
+      enableStreaming: true,
+      autoSaveHistory: false,
+      maxTokens: 2000,
+      timeout: 30,
+      maxHistory: 10,
+      debugMode: false,
       templates: { ...this.DEFAULT_TEMPLATES },
+      promptTemplates: [...this.DEFAULT_PROMPT_TEMPLATES],
     };
 
     await this.save(defaultConfig);
@@ -296,5 +364,161 @@ export class ConfigManager {
     this.config!.templates = { ...this.DEFAULT_TEMPLATES };
     this.saveTemplates(this.config!.templates);
     console.log('[ConfigManager] All templates reset to defaults');
+  }
+
+  // ========================================
+  // Prompt Templates (new system)
+  // ========================================
+
+  /**
+   * Load prompt templates from preferences
+   */
+  private loadPromptTemplates(): PromptTemplate[] {
+    try {
+      const templatesJson = this.getPref('templates', '') as string;
+      if (templatesJson && templatesJson.trim() !== '') {
+        const parsed = JSON.parse(templatesJson);
+        // Check if it's the new format (array)
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      }
+    } catch (error) {
+      console.warn('[ConfigManager] Failed to parse prompt templates, using defaults:', error);
+    }
+    return [...this.DEFAULT_PROMPT_TEMPLATES];
+  }
+
+  /**
+   * Save prompt templates to preferences
+   */
+  savePromptTemplates(templates: PromptTemplate[]): void {
+    try {
+      const templatesJson = JSON.stringify(templates);
+      this.setPref('templates', templatesJson);
+      if (this.config) {
+        this.config.promptTemplates = templates;
+      }
+    } catch (error) {
+      console.error('[ConfigManager] Failed to save prompt templates:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all prompt templates
+   */
+  getPromptTemplates(): PromptTemplate[] {
+    if (!this.config) {
+      throw new Error('Configuration not loaded. Call load() first.');
+    }
+    return this.config.promptTemplates || [...this.DEFAULT_PROMPT_TEMPLATES];
+  }
+
+  /**
+   * Get prompt template by ID
+   */
+  getPromptTemplateById(id: string): PromptTemplate | undefined {
+    const templates = this.getPromptTemplates();
+    return templates.find(t => t.id === id);
+  }
+
+  /**
+   * Get prompt templates by type
+   */
+  getPromptTemplatesByType(type: PromptTemplate['type']): PromptTemplate[] {
+    const templates = this.getPromptTemplates();
+    return templates.filter(t => t.type === type);
+  }
+
+  /**
+   * Add a new prompt template
+   */
+  addPromptTemplate(template: Omit<PromptTemplate, 'id' | 'createdAt' | 'updatedAt'>): PromptTemplate {
+    const templates = this.getPromptTemplates();
+    const newTemplate: PromptTemplate = {
+      ...template,
+      id: 'custom-' + Date.now(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    templates.push(newTemplate);
+    this.savePromptTemplates(templates);
+    console.log('[ConfigManager] Prompt template added:', newTemplate.id);
+    return newTemplate;
+  }
+
+  /**
+   * Update a prompt template
+   */
+  updatePromptTemplate(id: string, updates: Partial<PromptTemplate>): void {
+    const templates = this.getPromptTemplates();
+    const index = templates.findIndex(t => t.id === id);
+    if (index === -1) {
+      throw new Error(`Template not found: ${id}`);
+    }
+    templates[index] = {
+      ...templates[index],
+      ...updates,
+      updatedAt: Date.now(),
+    };
+    this.savePromptTemplates(templates);
+    console.log('[ConfigManager] Prompt template updated:', id);
+  }
+
+  /**
+   * Delete a prompt template
+   */
+  deletePromptTemplate(id: string): void {
+    const templates = this.getPromptTemplates();
+    const template = templates.find(t => t.id === id);
+    if (template?.isDefault) {
+      throw new Error('Cannot delete default template');
+    }
+    const filtered = templates.filter(t => t.id !== id);
+    this.savePromptTemplates(filtered);
+    console.log('[ConfigManager] Prompt template deleted:', id);
+  }
+
+  /**
+   * Reset a default template to its original content
+   */
+  resetDefaultTemplate(id: string): void {
+    const templates = this.getPromptTemplates();
+    const index = templates.findIndex(t => t.id === id);
+    if (index === -1) {
+      throw new Error(`Template not found: ${id}`);
+    }
+    const defaultTemplate = this.DEFAULT_PROMPT_TEMPLATES.find(t => t.id === id);
+    if (defaultTemplate) {
+      templates[index] = { ...defaultTemplate, updatedAt: Date.now() };
+      this.savePromptTemplates(templates);
+      console.log('[ConfigManager] Default template reset:', id);
+    }
+  }
+
+  /**
+   * Apply placeholder variables to a template
+   */
+  applyPlaceholders(templateContent: string, placeholders: TemplatePlaceholders): string {
+    let result = templateContent;
+    for (const [key, value] of Object.entries(placeholders)) {
+      if (value !== undefined) {
+        const placeholder = `{{${key}}}`;
+        result = result.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), value);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Get rendered template content with placeholders applied
+   */
+  getRenderedTemplate(templateId: string, placeholders: TemplatePlaceholders): string {
+    const template = this.getPromptTemplateById(templateId);
+    if (!template) {
+      throw new Error(`Template not found: ${templateId}`);
+    }
+    return this.applyPlaceholders(template.content, placeholders);
   }
 }
