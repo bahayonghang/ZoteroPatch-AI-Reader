@@ -108,12 +108,18 @@ async function build() {
         console.log('🎨 Icon files copied to build directory');
       }
 
-      // Copy chrome directory (preferences, content)
+      // Copy chrome directory (preferences, content, defaults)
       const chromeDir = path.join(__dirname, '..', 'chrome');
       const buildChromeDir = path.join(buildDir, 'chrome');
       if (fs.existsSync(chromeDir)) {
         copyDirSync(chromeDir, buildChromeDir);
         console.log('📁 Chrome directory copied');
+      }
+
+      // Ensure defaults/preferences directory exists in build
+      const defaultsDir = path.join(buildChromeDir, 'defaults', 'preferences');
+      if (fs.existsSync(defaultsDir)) {
+        console.log('📋 Default preferences copied');
       }
 
       console.log('📦 Manifest and bootstrap copied to build directory');
