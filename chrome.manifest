@@ -3,3 +3,6 @@ skin aireader classic/1.0 skin/
 
 # Resource aliases
 resource aireader skin/
+
+# Default preferences
+resource aireader-defaults chrome/defaults/

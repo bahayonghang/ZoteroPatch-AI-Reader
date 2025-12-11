@@ -37,6 +37,18 @@ async function startup({ id, version, resourceURI, rootURI: _rootURI }, reason) 
   // eslint-disable-next-line no-undef
   await Zotero.initializationPromise;
 
+  // Load default preferences
+  try {
+    const defaultPrefsPath = rootURI + 'chrome/defaults/preferences/prefs.js';
+    // eslint-disable-next-line no-undef
+    Services.scriptloader.loadSubScript(defaultPrefsPath);
+    // eslint-disable-next-line no-undef
+    Zotero.debug('[AI Reader] Default preferences loaded');
+  } catch (e) {
+    // eslint-disable-next-line no-undef
+    Zotero.debug('[AI Reader] Could not load default preferences: ' + e);
+  }
+
   // Register chrome resources
   // eslint-disable-next-line no-undef
   const aomStartup = Components.classes[
