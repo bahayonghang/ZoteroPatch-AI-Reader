@@ -93,8 +93,13 @@ dev:
     @echo "👀 启动开发模式..."
     npm run build:watch
 
+# 同步版本号（与 package.json 保持一致）
+sync-version:
+    @echo "🔄 正在同步版本号到 manifest 和偏好界面..."
+    @node -e "const fs = require('fs'); const version = require('./package.json').version; const manifestPath = 'manifest.json'; const prefPath = 'chrome/content/preferences.xhtml'; try { const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')); if (manifest.version !== version) { manifest.version = version; fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\\n'); console.log('✅ manifest.json 已同步版本', version); } else { console.log('ℹ️ manifest.json 已是版本', version); } } catch (e) { console.error('❌ 同步 manifest 失败', e); process.exit(1); } try { const prefContent = fs.readFileSync(prefPath, 'utf8'); const updated = prefContent.replace(/(id=\"aireader-version\"[^>]*>v)([0-9\\.]+)/, `$1${version}`); if (updated !== prefContent) { fs.writeFileSync(prefPath, updated); console.log('✅ preferences.xhtml 已同步版本', version); } else { console.log('ℹ️ preferences.xhtml 已是版本', version); } } catch (e) { console.error('❌ 同步 preferences.xhtml 失败', e); process.exit(1); }"
+
 # 构建生产版本
-build:
+build: sync-version
     @echo "🚀 正在构建生产版本..."
     npm run build
 

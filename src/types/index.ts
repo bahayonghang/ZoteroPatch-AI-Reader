@@ -196,7 +196,20 @@ export interface ZoteroReader {
 }
 
 /**
- * Prompt templates interface
+ * Prompt template interface (single template)
+ */
+export interface PromptTemplate {
+  id: string;
+  name: string;
+  type: 'translation' | 'summary' | 'keyPoints' | 'qa' | 'custom';
+  content: string;
+  isDefault: boolean;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+/**
+ * Prompt templates interface (legacy, for backward compatibility)
  */
 export interface PromptTemplates {
   translation: string;
@@ -206,18 +219,48 @@ export interface PromptTemplates {
 }
 
 /**
+ * Template placeholder variables
+ */
+export interface TemplatePlaceholders {
+  text?: string;
+  language?: string;
+  context?: string;
+  question?: string;
+  title?: string;
+  author?: string;
+}
+
+/**
  * Plugin configuration interface
  */
 export interface PluginConfig {
   apiKey: string;
   apiEndpoint: string;
   model: string;
+  customModel?: string;
   temperature: number;
   defaultLanguage: string;
   enableTranslation: boolean;
   enableSummary: boolean;
   enableQA: boolean;
+  enableStreaming: boolean;
+  autoSaveHistory: boolean;
+  maxTokens: number;
+  timeout: number;
+  maxHistory: number;
+  debugMode: boolean;
   templates: PromptTemplates;
+  promptTemplates?: PromptTemplate[];
+}
+
+/**
+ * Streaming callback interface
+ */
+export interface StreamCallbacks {
+  onStart?: () => void;
+  onChunk?: (chunk: string) => void;
+  onComplete?: (fullText: string) => void;
+  onError?: (error: Error) => void;
 }
 
 /**
@@ -241,6 +284,28 @@ export interface SessionContext {
   summary?: string;
   keyPoints?: string[];
   lastUpdated: number;
+  documentTitle?: string;
+  documentAuthor?: string;
+}
+
+/**
+ * Chat history save options
+ */
+export interface ChatHistorySaveOptions {
+  itemID: number;
+  messages: ChatMessage[];
+  format?: 'markdown' | 'html' | 'plain';
+  includeTimestamps?: boolean;
+}
+
+/**
+ * Markdown renderer options
+ */
+export interface MarkdownRenderOptions {
+  enableCodeHighlight?: boolean;
+  enableTables?: boolean;
+  enableLinks?: boolean;
+  sanitize?: boolean;
 }
 
 export {};

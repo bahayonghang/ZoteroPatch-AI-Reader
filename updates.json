@@ -1,0 +1,19 @@
+{
+  "addons": {
+    "ai-reader@zoteropatch.com": {
+      "updates": [
+        {
+          "version": "0.2.1",
+          "update_link": "https://github.com/bahayonghang/ZoteroPatch-AI-Reader/releases/download/v0.2.1/zoteropatch-ai-reader.xpi",
+          "update_hash": "",
+          "applications": {
+            "zotero": {
+              "strict_min_version": "6.999",
+              "strict_max_version": "8.0.*"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
