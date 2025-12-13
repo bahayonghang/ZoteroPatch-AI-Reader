@@ -1,22 +1,26 @@
-<?xml version="1.0"?>
-<!DOCTYPE window SYSTEM "chrome://aireader/locale/aireader.dtd">
-<vbox id="zotero-prefpane-aireader" 
-      xmlns="http://www.w3.org/1999/xhtml"
-      onload="AIReaderPrefs.init()">
+<div id="zotero-prefpane-aireader"
+     xmlns="http://www.w3.org/1999/xhtml"
+     onload="AIReaderPrefs.init()">
 
   <style>
     #zotero-prefpane-aireader {
       padding: 16px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-    .aireader-section {
-      margin-bottom: 24px;
+    .aireader-groupbox {
+      margin-bottom: 20px;
+      padding: 12px;
+      border: 1px solid var(--fill-quinary, #e0e0e0);
+      border-radius: 8px;
+      background: var(--material-background, #fff);
     }
-    .aireader-section-title {
-      font-size: 16px;
+    .aireader-groupbox-title {
+      font-size: 15px;
       font-weight: 600;
       margin: 0 0 12px 0;
-      color: var(--fill-primary);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--fill-quinary, #e0e0e0);
+      color: var(--fill-primary, #333);
     }
     .aireader-row {
       display: flex;
@@ -32,24 +36,24 @@
     .aireader-input {
       flex: 1;
       padding: 8px;
-      border: 1px solid var(--fill-quinary);
+      border: 1px solid var(--fill-quinary, #ccc);
       border-radius: 6px;
       font-size: 13px;
-      background: var(--material-background);
-      color: var(--fill-primary);
+      background: var(--material-background, #fff);
+      color: var(--fill-primary, #333);
     }
     .aireader-input:focus {
       outline: none;
-      border-color: var(--accent-blue);
+      border-color: var(--accent-blue, #0066cc);
     }
     .aireader-select {
       flex: 1;
       padding: 8px;
-      border: 1px solid var(--fill-quinary);
+      border: 1px solid var(--fill-quinary, #ccc);
       border-radius: 6px;
       font-size: 13px;
-      background: var(--material-background);
-      color: var(--fill-primary);
+      background: var(--material-background, #fff);
+      color: var(--fill-primary, #333);
     }
     .aireader-checkbox-row {
       display: flex;
@@ -62,20 +66,20 @@
     }
     .aireader-button {
       padding: 8px 16px;
-      border: 1px solid var(--fill-quinary);
+      border: 1px solid var(--fill-quinary, #ccc);
       border-radius: 6px;
-      background: var(--material-background);
-      color: var(--fill-primary);
+      background: var(--material-background, #fff);
+      color: var(--fill-primary, #333);
       cursor: pointer;
       font-size: 13px;
     }
     .aireader-button:hover {
-      background: var(--fill-quinary);
+      background: var(--fill-quinary, #f0f0f0);
     }
     .aireader-button-primary {
-      background: var(--accent-blue);
+      background: var(--accent-blue, #0066cc);
       color: white;
-      border-color: var(--accent-blue);
+      border-color: var(--accent-blue, #0066cc);
     }
     .aireader-result {
       font-size: 13px;
@@ -106,13 +110,13 @@
     }
   </style>
 
-  <!-- API 设置 -->
-  <div class="aireader-section">
-    <h2 class="aireader-section-title">API 设置</h2>
-    
+  <!-- API Settings -->
+  <div class="aireader-groupbox">
+    <label class="aireader-groupbox-title">API 设置</label>
+
     <div class="aireader-row">
       <label class="aireader-label">API Key:</label>
-      <input id="aireader-apiKey" type="password" class="aireader-input" 
+      <input id="aireader-apiKey" type="password" class="aireader-input"
              placeholder="输入您的 API Key" />
     </div>
 
@@ -156,27 +160,27 @@
     </div>
   </div>
 
-  <!-- 功能设置 -->
-  <div class="aireader-section">
-    <h2 class="aireader-section-title">功能设置</h2>
-    
+  <!-- Feature Settings -->
+  <div class="aireader-groupbox">
+    <label class="aireader-groupbox-title">功能设置</label>
+
     <div class="aireader-checkbox-row">
-      <input id="aireader-enableTranslation" type="checkbox" checked />
+      <input id="aireader-enableTranslation" type="checkbox" checked="checked" />
       <label class="aireader-checkbox-label" for="aireader-enableTranslation">启用翻译功能</label>
     </div>
 
     <div class="aireader-checkbox-row">
-      <input id="aireader-enableSummary" type="checkbox" checked />
+      <input id="aireader-enableSummary" type="checkbox" checked="checked" />
       <label class="aireader-checkbox-label" for="aireader-enableSummary">启用摘要功能</label>
     </div>
 
     <div class="aireader-checkbox-row">
-      <input id="aireader-enableQA" type="checkbox" checked />
+      <input id="aireader-enableQA" type="checkbox" checked="checked" />
       <label class="aireader-checkbox-label" for="aireader-enableQA">启用问答功能</label>
     </div>
 
     <div class="aireader-checkbox-row">
-      <input id="aireader-enableStreaming" type="checkbox" checked />
+      <input id="aireader-enableStreaming" type="checkbox" checked="checked" />
       <label class="aireader-checkbox-label" for="aireader-enableStreaming">启用流式输出</label>
     </div>
 
@@ -199,10 +203,10 @@
     </div>
   </div>
 
-  <!-- 高级设置 -->
-  <div class="aireader-section">
-    <h2 class="aireader-section-title">高级设置</h2>
-    
+  <!-- Advanced Settings -->
+  <div class="aireader-groupbox">
+    <label class="aireader-groupbox-title">高级设置</label>
+
     <div class="aireader-row">
       <label class="aireader-label">Max Tokens:</label>
       <input id="aireader-maxTokens" type="number" class="aireader-input"
@@ -230,12 +234,12 @@
     </div>
   </div>
 
-  <!-- 关于 -->
-  <div class="aireader-section">
+  <!-- About -->
+  <div class="aireader-groupbox">
     <div class="aireader-row" style="justify-content: space-between;">
       <div>
         <div style="font-size: 14px; font-weight: 600;">ZoteroPatch AI Reader</div>
-        <div style="font-size: 12px; color: #666;">v0.3.0</div>
+        <div style="font-size: 12px; color: #666;">v0.3.1</div>
       </div>
       <button id="aireader-resetDefaults" class="aireader-button">重置为默认值</button>
     </div>
@@ -244,14 +248,14 @@
   <script><![CDATA[
     var AIReaderPrefs = {
       PREF_PREFIX: 'extensions.aireader.',
-      
+
       init: function() {
         console.log('[AIReader Prefs] Initializing...');
         this.loadSettings();
         this.initEventListeners();
         console.log('[AIReader Prefs] Initialization complete');
       },
-      
+
       getPref: function(key, defaultValue) {
         try {
           const value = Zotero.Prefs.get(this.PREF_PREFIX + key, true);
@@ -261,7 +265,7 @@
           return defaultValue;
         }
       },
-      
+
       setPref: function(key, value) {
         try {
           Zotero.Prefs.set(this.PREF_PREFIX + key, value, true);
@@ -269,27 +273,27 @@
           console.error('[AIReader Prefs] Error setting pref:', key, e);
         }
       },
-      
+
       $: function(id) {
         return document.getElementById(id);
       },
-      
+
       loadSettings: function() {
         console.log('[AIReader Prefs] Loading settings...');
-        
+
         // API settings
         this.$('aireader-apiKey').value = this.getPref('apiKey', '');
         this.$('aireader-apiEndpoint').value = this.getPref('apiEndpoint', 'https://api.openai.com/v1');
-        
+
         const model = this.getPref('model', 'gpt-3.5-turbo');
         this.$('aireader-model').value = model;
         this.$('aireader-customModel').value = this.getPref('customModel', '');
         this.updateCustomModelVisibility(model);
-        
+
         const temp = this.getPref('temperature', 0.7);
         this.$('aireader-temperature').value = temp;
         this.$('aireader-temperature-value').textContent = temp.toFixed(1);
-        
+
         // Feature toggles
         this.$('aireader-enableTranslation').checked = this.getPref('enableTranslation', true);
         this.$('aireader-enableSummary').checked = this.getPref('enableSummary', true);
@@ -297,31 +301,31 @@
         this.$('aireader-enableStreaming').checked = this.getPref('enableStreaming', true);
         this.$('aireader-autoSaveHistory').checked = this.getPref('autoSaveHistory', false);
         this.$('aireader-defaultLanguage').value = this.getPref('defaultLanguage', 'zh-CN');
-        
+
         // Advanced settings
         this.$('aireader-maxTokens').value = this.getPref('maxTokens', 2000);
         this.$('aireader-timeout').value = this.getPref('timeout', 30);
         this.$('aireader-maxHistory').value = this.getPref('maxHistory', 10);
         this.$('aireader-debugMode').checked = this.getPref('debugMode', false);
-        
+
         console.log('[AIReader Prefs] Settings loaded');
       },
-      
+
       saveSettings: function() {
         console.log('[AIReader Prefs] Saving settings...');
-        
+
         // API settings
         this.setPref('apiKey', this.$('aireader-apiKey').value);
         this.setPref('apiEndpoint', this.$('aireader-apiEndpoint').value);
-        
+
         const model = this.$('aireader-model').value;
         this.setPref('model', model);
         if (model === 'custom') {
           this.setPref('customModel', this.$('aireader-customModel').value);
         }
-        
+
         this.setPref('temperature', parseFloat(this.$('aireader-temperature').value));
-        
+
         // Feature toggles
         this.setPref('enableTranslation', this.$('aireader-enableTranslation').checked);
         this.setPref('enableSummary', this.$('aireader-enableSummary').checked);
@@ -329,16 +333,16 @@
         this.setPref('enableStreaming', this.$('aireader-enableStreaming').checked);
         this.setPref('autoSaveHistory', this.$('aireader-autoSaveHistory').checked);
         this.setPref('defaultLanguage', this.$('aireader-defaultLanguage').value);
-        
+
         // Advanced settings
         this.setPref('maxTokens', parseInt(this.$('aireader-maxTokens').value, 10));
         this.setPref('timeout', parseInt(this.$('aireader-timeout').value, 10));
         this.setPref('maxHistory', parseInt(this.$('aireader-maxHistory').value, 10));
         this.setPref('debugMode', this.$('aireader-debugMode').checked);
-        
+
         console.log('[AIReader Prefs] Settings saved');
       },
-      
+
       updateCustomModelVisibility: function(model) {
         const row = this.$('aireader-customModel-row');
         if (model === 'custom') {
@@ -347,29 +351,29 @@
           row.classList.add('aireader-hidden');
         }
       },
-      
+
       testConnection: async function() {
         const resultLabel = this.$('aireader-testResult');
         const testBtn = this.$('aireader-testConnection');
-        
+
         const apiKey = this.$('aireader-apiKey').value;
         const apiEndpoint = this.$('aireader-apiEndpoint').value;
         let model = this.$('aireader-model').value;
-        
+
         if (model === 'custom') {
           model = this.$('aireader-customModel').value;
         }
-        
+
         if (!apiKey || !apiEndpoint) {
           resultLabel.textContent = '请先填写 API Key 和端点';
           resultLabel.className = 'aireader-result error';
           return;
         }
-        
+
         testBtn.disabled = true;
         testBtn.textContent = '测试中...';
         resultLabel.textContent = '';
-        
+
         try {
           const response = await fetch(apiEndpoint + '/chat/completions', {
             method: 'POST',
@@ -383,7 +387,7 @@
               max_tokens: 5
             })
           });
-          
+
           if (response.ok) {
             resultLabel.textContent = '✓ 连接成功';
             resultLabel.className = 'aireader-result success';
@@ -400,12 +404,12 @@
           testBtn.textContent = '测试连接';
         }
       },
-      
+
       resetToDefaults: function() {
         if (!confirm('确定要重置所有设置为默认值吗？')) {
           return;
         }
-        
+
         this.$('aireader-apiKey').value = '';
         this.$('aireader-apiEndpoint').value = 'https://api.openai.com/v1';
         this.$('aireader-model').value = 'gpt-3.5-turbo';
@@ -413,38 +417,38 @@
         this.updateCustomModelVisibility('gpt-3.5-turbo');
         this.$('aireader-temperature').value = 0.7;
         this.$('aireader-temperature-value').textContent = '0.7';
-        
+
         this.$('aireader-enableTranslation').checked = true;
         this.$('aireader-enableSummary').checked = true;
         this.$('aireader-enableQA').checked = true;
         this.$('aireader-enableStreaming').checked = true;
         this.$('aireader-autoSaveHistory').checked = false;
         this.$('aireader-defaultLanguage').value = 'zh-CN';
-        
+
         this.$('aireader-maxTokens').value = 2000;
         this.$('aireader-timeout').value = 30;
         this.$('aireader-maxHistory').value = 10;
         this.$('aireader-debugMode').checked = false;
-        
+
         this.saveSettings();
         alert('设置已重置为默认值');
       },
-      
+
       initEventListeners: function() {
         var self = this;
-        
+
         // Temperature slider
         this.$('aireader-temperature').addEventListener('input', function() {
           self.$('aireader-temperature-value').textContent = parseFloat(this.value).toFixed(1);
           self.saveSettings();
         });
-        
+
         // Model selection
         this.$('aireader-model').addEventListener('change', function() {
           self.updateCustomModelVisibility(this.value);
           self.saveSettings();
         });
-        
+
         // All input changes trigger save
         var inputs = [
           'aireader-apiKey', 'aireader-apiEndpoint', 'aireader-customModel',
@@ -453,7 +457,7 @@
         inputs.forEach(function(id) {
           self.$(id).addEventListener('change', function() { self.saveSettings(); });
         });
-        
+
         // Checkboxes
         var checkboxes = [
           'aireader-enableTranslation', 'aireader-enableSummary', 'aireader-enableQA',
@@ -462,17 +466,17 @@
         checkboxes.forEach(function(id) {
           self.$(id).addEventListener('change', function() { self.saveSettings(); });
         });
-        
+
         // Select menus
         this.$('aireader-defaultLanguage').addEventListener('change', function() { self.saveSettings(); });
-        
+
         // Test connection
         this.$('aireader-testConnection').addEventListener('click', function() { self.testConnection(); });
-        
+
         // Reset defaults
         this.$('aireader-resetDefaults').addEventListener('click', function() { self.resetToDefaults(); });
       }
     };
   ]]></script>
 
-</vbox>
+</div>
