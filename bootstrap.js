@@ -12,6 +12,13 @@ var pluginInstance = null;
 // Store rootURI for use in other functions
 var rootURI;
 
+function getRootURIString(rootURIValue, resourceURI) {
+  if (typeof rootURIValue === 'string') return rootURIValue;
+  if (rootURIValue && typeof rootURIValue.spec === 'string') return rootURIValue.spec;
+  if (resourceURI && typeof resourceURI.spec === 'string') return resourceURI.spec;
+  return null;
+}
+
 /**
  * Called when the plugin is installed
  */
@@ -27,8 +34,12 @@ function install(data, reason) {
  * @param {number} reason - Reason code for startup
  */
 // eslint-disable-next-line no-unused-vars
-async function startup({ id, version, resourceURI, rootURI: _rootURI }, reason) {
-  rootURI = _rootURI;
+async function startup(data, reason) {
+  const { version, resourceURI } = data;
+  rootURI = getRootURIString(data.rootURI, resourceURI);
+  if (!rootURI) {
+    throw new Error('[AI Reader] Failed to determine rootURI from startup data');
+  }
 
   // eslint-disable-next-line no-undef
   Zotero.debug(`[AI Reader] Starting up v${version}, rootURI: ${rootURI}`);
@@ -55,11 +66,20 @@ async function startup({ id, version, resourceURI, rootURI: _rootURI }, reason) 
     '@mozilla.org/addons/addon-manager-startup;1'
   ].getService(Components.interfaces.amIAddonManagerStartup);
 
-  const manifestURI = Services.io.newURI(rootURI + 'manifest.json');
-  chromeHandle = aomStartup.registerChrome(manifestURI, [
-    ['content', 'aireader', rootURI + 'chrome/content/'],
-    ['skin', 'aireader', 'classic/1.0', rootURI + 'skin/'],
-  ]);
+  try {
+    const manifestURI = Services.io.newURI(rootURI + 'chrome.manifest');
+    chromeHandle = aomStartup.registerChrome(manifestURI, [
+      ['content', 'aireader', rootURI + 'chrome/content/'],
+      ['skin', 'aireader', 'classic/1.0', rootURI + 'skin/'],
+      ['locale', 'aireader', 'en-US', rootURI + 'chrome/locale/en-US/'],
+      ['locale', 'aireader', 'zh-CN', rootURI + 'chrome/locale/zh-CN/'],
+    ]);
+  } catch (e) {
+    // eslint-disable-next-line no-undef
+    Zotero.debug('[AI Reader] Failed to register chrome resources: ' + e);
+    // eslint-disable-next-line no-undef
+    Zotero.logError(e);
+  }
 
   // Load compiled plugin code - index.js is in the root of the XPI
   try {

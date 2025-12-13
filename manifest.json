@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "ZoteroPatch AI Reader",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "AI助手增强Zotero 7 PDF阅读器：翻译、摘要、结构化要点、问答与笔记写回",
   "homepage_url": "https://github.com/bahayonghang/ZoteroPatch-AI-Reader",
   "author": "Your Name",
