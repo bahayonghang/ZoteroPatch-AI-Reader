@@ -4,48 +4,118 @@
  */
 
 /**
+ * Item Pane Section Configuration (Zotero 7+)
+ */
+export interface ItemPaneSectionConfig {
+  paneID: string;
+  pluginID: string;
+  header: {
+    l10nID: string;
+    l10nArgs?: string;
+    icon?: string;
+    darkIcon?: string;
+  };
+  sidenav?: {
+    l10nID: string;
+    l10nArgs?: string;
+    icon?: string;
+    darkIcon?: string;
+  };
+  bodyXHTML?: string;
+  onInit?: (props: ItemPaneSectionProps) => void;
+  onDestroy?: (props: ItemPaneSectionProps) => void;
+  onItemChange?: (props: ItemPaneSectionProps) => void;
+  onRender?: (props: ItemPaneSectionProps) => void;
+}
+
+/**
+ * Item Pane Section Props
+ */
+export interface ItemPaneSectionProps {
+  body: HTMLElement;
+  item: { id?: number } | null;
+  editable: boolean;
+  tabType: 'library' | 'reader';
+  refresh: () => Promise<unknown>;
+}
+
+/**
+ * Reader Event Listener Types
+ */
+export type ReaderEventType =
+  | 'renderTextSelectionPopup'
+  | 'createAnnotationContextMenu'
+  | 'renderSidebarAnnotationHeader'
+  | 'renderToolbar';
+
+/**
+ * Text Selection Popup Params
+ */
+export interface TextSelectionPopupParams {
+  annotation?: {
+    text?: string;
+  };
+}
+
+export interface ReaderEvent<TParams = unknown, TAppend = unknown> {
+  reader: ZoteroReader;
+  doc: Document;
+  params: TParams;
+  append: TAppend;
+  type: ReaderEventType;
+}
+
+export type ReaderAppendDOM = (...node: Array<Node | string>) => void;
+
+export interface ReaderEventMap {
+  renderTextSelectionPopup: TextSelectionPopupParams;
+  createAnnotationContextMenu: unknown;
+  renderSidebarAnnotationHeader: unknown;
+  renderToolbar: unknown;
+}
+
+export interface ReaderAppendMap {
+  renderTextSelectionPopup: ReaderAppendDOM;
+  createAnnotationContextMenu: unknown;
+  renderSidebarAnnotationHeader: ReaderAppendDOM;
+  renderToolbar: ReaderAppendDOM;
+}
+
+export type ReaderEventForType<T extends ReaderEventType> = ReaderEvent<
+  ReaderEventMap[T],
+  ReaderAppendMap[T]
+> & { type: T };
+
+/**
  * Zotero global object interface
  */
 interface ZoteroGlobal {
   Reader: {
     _readers?: ZoteroReader[];
-    registerSidebarSection?(config: {
-      paneID: string;
-      id: string;
-      title: string;
-      index?: number;
-      icon?: string;
-      init: (props: {
-        body: HTMLElement;
-        tabID: string;
-        reader?: ZoteroReader;
-        item?: { id?: number };
-      }) => void;
-      destroy?: (props: {
-        body: HTMLElement;
-        tabID: string;
-        reader?: ZoteroReader;
-        item?: { id?: number };
-      }) => void;
-    }): () => void;
-    _registerSidebarSection?(config: {
-      paneID: string;
-      id: string;
-      title: string;
-      init: (props: {
-        body: HTMLElement;
-        tabID: string;
-        reader?: ZoteroReader;
-        item?: { id?: number };
-      }) => void;
-      destroy?: (props: {
-        body: HTMLElement;
-        tabID: string;
-        reader?: ZoteroReader;
-        item?: { id?: number };
-      }) => void;
-    }): () => void;
     getByTabID?(tabID: string): ZoteroReader | undefined;
+    /**
+     * Register an event listener for reader events (Zotero 7+)
+     * @param event - Event type to listen for
+     * @param callback - Callback function
+     * @param pluginID - Plugin identifier for cleanup
+     */
+    registerEventListener?<T extends ReaderEventType>(
+      event: T,
+      callback: (event: ReaderEventForType<T>) => void | Promise<void>,
+      pluginID?: string
+    ): void;
+
+    unregisterEventListener?<T extends ReaderEventType>(
+      event: T,
+      callback: (event: ReaderEventForType<T>) => void | Promise<void>
+    ): void;
+  };
+  /**
+   * Item Pane Manager for sidebar sections (Zotero 7+)
+   */
+  ItemPaneManager?: {
+    registerSection(config: ItemPaneSectionConfig): false | string;
+    unregisterSection(sectionID: string): boolean;
   };
   AIReader?: unknown;
   Prefs: {
@@ -53,9 +123,11 @@ interface ZoteroGlobal {
     set(key: string, value: unknown, global?: boolean): void;
     openPreferences?(paneID: string): void;
   };
-  PreferencePanes: {
-    register(paneConfig: PreferencePaneConfig): string;
+  PreferencePanes?: {
+    register(paneConfig: PreferencePaneConfig): Promise<string>;
   };
+  getMainWindow?(): Window;
+  getMainWindows?(): Window[];
   Items: {
     get(itemID: number): ZoteroItem;
     getAsync(itemID: number): Promise<ZoteroItem>;
@@ -75,6 +147,9 @@ interface ZoteroGlobal {
     Internal?: {
       openPreferences?(paneID: string): void;
     };
+  };
+  getActiveZoteroPane?(): {
+    getSelectedItems?(): ZoteroItem[];
   };
   debug(...args: unknown[]): void;
   logError(error: unknown): void;
@@ -154,6 +229,12 @@ declare global {
   const Components: ComponentsGlobal;
   const Services: ServicesGlobal;
   const ChromeUtils: unknown;
+
+  interface Document {
+    l10n?: {
+      addResourceIds(resourceIds: string[]): void;
+    } | null;
+  }
 
   interface Window {
     AIReaderPanel?: HTMLElement;
